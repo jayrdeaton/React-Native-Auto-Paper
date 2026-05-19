@@ -7,8 +7,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - Triadic color palette from a single seed color (primary → secondary → tertiary, 120° apart on the color wheel)
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
-- SplashScreen gate — hides splash only once the theme is ready
-- Optional Redux slice (`themeReducer`, `themeActions`) for wiring into your store
+- Optional Redux slice (`themeReducer`, `themeActions`, `selectThemeAppearance`, `selectThemeColor`) for wiring into your store
 - All color utilities exported for standalone use
 
 ## Installation
@@ -21,22 +20,13 @@ Peer dependencies:
 
 ```bash
 npm install react-native react-native-paper
-# optional — only needed if using splashScreen:
-npm install expo-splash-screen
 ```
 
 ## Usage
 
 ### ThemeProvider (simplest)
 
-Call `configureSplashScreen` at your app entry point before any components mount, then wrap your tree:
-
 ```tsx
-// index.ts / App.tsx top-level
-import { configureSplashScreen } from '@rific/auto-paper'
-configureSplashScreen({ duration: 500, fade: true })
-
-// App.tsx
 import { ThemeProvider } from '@rific/auto-paper'
 
 export default function App() {
@@ -51,7 +41,7 @@ export default function App() {
 }
 ```
 
-`ThemeProvider` renders `null` (keeping the splash screen visible) until the theme is computed on first mount.
+`ThemeProvider` renders `null` on the first render while the theme computes. If you use `expo-splash-screen`, gate `SplashScreen.hideAsync()` on the theme being ready in your own component.
 
 ### With React Navigation
 
@@ -104,10 +94,11 @@ export const store = configureStore({
 ```tsx
 // App.tsx
 import { useSelector } from 'react-redux'
-import { ThemeProvider } from '@rific/auto-paper'
+import { ThemeProvider, selectThemeAppearance, selectThemeColor } from '@rific/auto-paper'
 
 export default function App() {
-  const { appearance, color } = useSelector((state) => state.theme)
+  const appearance = useSelector((state: RootState) => selectThemeAppearance(state.theme))
+  const color = useSelector((state: RootState) => selectThemeColor(state.theme))
   return (
     <ThemeProvider appearance={appearance} color={color}>
       {/* your app */}
@@ -139,23 +130,14 @@ store.dispatch(themeActions.initialize({ color: myStoredColor }))
 |---|---|---|---|
 | `appearance` | `'system' \| 'light' \| 'dark'` | — | Appearance mode |
 | `color` | `string` | — | Seed color (hex, rgb, or CSS name) |
-| `splashScreen` | `boolean` | `true` | Hide expo-splash-screen when theme is ready |
 | `children` | `ReactNode` | — | |
 
-### `useComputedTheme(appearance, color, options?)`
+### `useComputedTheme(appearance, color)`
 
-Returns `MD3Theme | null`. `null` means the theme hasn't been computed yet (first render).
-
-```ts
-const theme = useComputedTheme('system', '#6750a4', { splashScreen: false })
-```
-
-### `configureSplashScreen(options?)`
-
-Call once at app entry. Wraps `SplashScreen.preventAutoHideAsync()` + `SplashScreen.setOptions()`.
+Returns `MD3Theme | null`. `null` on the first render while the theme computes.
 
 ```ts
-configureSplashScreen({ duration: 500, fade: true })
+const theme = useComputedTheme('system', '#6750a4')
 ```
 
 ### Color utilities
@@ -175,7 +157,7 @@ getHex('rgb(255, 0, 0)')                     // → '#ff0000'
 ### Redux slice
 
 ```ts
-import { themeReducer, themeActions, ThemeState, ThemeAppearance } from '@rific/auto-paper'
+import { themeReducer, themeActions, selectThemeAppearance, selectThemeColor, ThemeState, ThemeAppearance } from '@rific/auto-paper'
 ```
 
 | Action | Payload |
@@ -183,6 +165,17 @@ import { themeReducer, themeActions, ThemeState, ThemeAppearance } from '@rific/
 | `initialize` | `Partial<ThemeState>` |
 | `setAppearance` | `ThemeAppearance` |
 | `setColor` | `string` |
+
+| Selector | Returns |
+|---|---|
+| `selectThemeAppearance` | `ThemeAppearance` |
+| `selectThemeColor` | `string` |
+
+Selectors accept `ThemeState` directly — compose them with your root state selector:
+
+```ts
+const appearance = useSelector((state: RootState) => selectThemeAppearance(state.theme))
+```
 
 ## License
 

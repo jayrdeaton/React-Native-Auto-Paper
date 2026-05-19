@@ -1,4 +1,3 @@
-import * as SplashScreen from 'expo-splash-screen'
 import { useCallback, useEffect, useState } from 'react'
 import { Appearance } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, MD3Theme } from 'react-native-paper'
@@ -9,12 +8,7 @@ import { isDarkColor } from './utils/isDarkColor'
 
 export type ThemeAppearance = 'system' | 'light' | 'dark'
 
-export type ComputedThemeOptions = {
-  splashScreen?: boolean
-}
-
-export function useComputedTheme(appearance: ThemeAppearance, color: string, options?: ComputedThemeOptions): MD3Theme | null {
-  const splashScreen = options?.splashScreen !== false
+export function useComputedTheme(appearance: ThemeAppearance, color: string): MD3Theme | null {
   const [theme, setTheme] = useState<MD3Theme | null>(null)
 
   const computeTheme = useCallback(() => {
@@ -78,10 +72,6 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string, opt
     const subscription = Appearance.addChangeListener(computeTheme)
     return subscription.remove
   }, [computeTheme])
-
-  useEffect(() => {
-    if (theme && splashScreen) SplashScreen.hideAsync()
-  }, [theme, splashScreen])
 
   return theme
 }

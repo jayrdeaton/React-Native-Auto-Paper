@@ -26,3 +26,6 @@ const slice = createSlice({
 
 export const themeActions = slice.actions
 export const themeReducer = slice.reducer
+
+export const selectThemeAppearance = (state: ThemeState) => state.appearance
+export const selectThemeColor = (state: ThemeState) => state.color

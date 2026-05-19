@@ -69,6 +69,17 @@ src/
 
 ## Code Style
 
-No ESLint configured yet. Keep consistent with the rest of the `@rific` ecosystem when adding it:
-- Single quotes, no semicolons, no trailing commas
-- Sorted imports (`simple-import-sort`)
+Enforced by ESLint + Prettier — run `npm run lint` before finishing any task.
+
+**Prettier config:**
+- Single quotes, JSX single quotes
+- No semicolons
+- No trailing commas
+- Print width: 1000 (effectively disabled)
+
+**ESLint rules (warnings):**
+- `simple-import-sort` — imports and exports must be sorted
+- `react-native/sort-styles` — StyleSheet keys must be sorted alphabetically
+- `react-native/no-inline-styles` — no inline style objects
+- `react-native/no-unused-styles` — no unused StyleSheet entries
+- `no-console` — no console statements

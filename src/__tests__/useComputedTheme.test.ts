@@ -1,11 +1,9 @@
 import { act, renderHook } from '@testing-library/react'
 import { Appearance } from 'react-native'
-import { hideAsync } from 'expo-splash-screen'
 
 import { ThemeAppearance, useComputedTheme } from '../useComputedTheme'
 
 const mockAppearance = Appearance as jest.Mocked<typeof Appearance>
-const mockHideAsync = hideAsync as jest.Mock
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -45,16 +43,6 @@ describe('useComputedTheme', () => {
     mockAppearance.getColorScheme.mockReturnValue('dark')
     const { result } = renderHook(() => useComputedTheme('system', '#6750a4'))
     expect(result.current?.dark).toBe(true)
-  })
-
-  it('calls SplashScreen.hideAsync when theme is ready and splashScreen is true', () => {
-    renderHook(() => useComputedTheme('light', '#6750a4', { splashScreen: true }))
-    expect(mockHideAsync).toHaveBeenCalled()
-  })
-
-  it('does not call SplashScreen.hideAsync when splashScreen is false', () => {
-    renderHook(() => useComputedTheme('light', '#6750a4', { splashScreen: false }))
-    expect(mockHideAsync).not.toHaveBeenCalled()
   })
 
   it('subscribes to Appearance.addChangeListener on mount', () => {
