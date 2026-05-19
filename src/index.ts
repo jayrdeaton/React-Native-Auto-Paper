@@ -1,5 +1,5 @@
 export type { ThemeState } from './redux/themeSlice'
-export { themeActions, themeReducer, selectThemeAppearance, selectThemeColor } from './redux/themeSlice'
+export { selectThemeAppearance, selectThemeColor, themeActions, themeReducer } from './redux/themeSlice'
 export type { ThemeProviderProps } from './ThemeProvider'
 export { ThemeProvider } from './ThemeProvider'
 export type { ThemeAppearance } from './useComputedTheme'
