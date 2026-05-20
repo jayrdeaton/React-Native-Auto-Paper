@@ -9,23 +9,33 @@ export type ThemeState = {
   color: string
 }
 
-const initialState: ThemeState = {
+const defaultInitialState: ThemeState = {
   appearance: 'system',
   color: '#6750a4'
 }
 
-const slice = createSlice({
+const reducers = {
+  initialize: (state: ThemeState, action: PayloadAction<Partial<ThemeState>>) => ({ ...state, ...action.payload }),
+  setAppearance: (state: ThemeState, action: PayloadAction<ThemeAppearance>) => ({ ...state, appearance: action.payload }),
+  setColor: (state: ThemeState, action: PayloadAction<string>) => ({ ...state, color: action.payload })
+}
+
+export function createThemeReducer(initialState?: Partial<ThemeState>) {
+  return createSlice({
+    name: 'theme',
+    initialState: { ...defaultInitialState, ...initialState },
+    reducers
+  }).reducer
+}
+
+const defaultSlice = createSlice({
   name: 'theme',
-  initialState,
-  reducers: {
-    initialize: (state, action: PayloadAction<Partial<ThemeState>>) => ({ ...state, ...action.payload }),
-    setAppearance: (state, action: PayloadAction<ThemeAppearance>) => ({ ...state, appearance: action.payload }),
-    setColor: (state, action: PayloadAction<string>) => ({ ...state, color: action.payload })
-  }
+  initialState: defaultInitialState,
+  reducers
 })
 
-export const themeActions = slice.actions
-export const themeReducer = slice.reducer
+export const themeActions = defaultSlice.actions
+export const themeReducer = defaultSlice.reducer
 
 export const selectThemeAppearance = (state: ThemeState) => state.appearance
 export const selectThemeColor = (state: ThemeState) => state.color
