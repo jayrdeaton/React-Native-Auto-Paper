@@ -1,0 +1,19 @@
+Logs for your project will appear below. Press Ctrl+C to exit.
+› Opening on iOS...
+› Opening exp+lumber://expo-development-client/?url=http%3A%2F%2F192.168.1.91%3A8081 on iPhone 17
+› Press ? │ show all commands
+iOS Bundled 8518ms node_modules/expo-router/entry.js (2600 modules)
+ ERROR  [ReferenceError: Property 'React' doesn't exist] 
+
+Code: Theme.tsx
+  17 |   const theme = useComputedTheme(appearance, color)
+  18 |   return (
+> 19 |     <Provider appearance={appearance} color={color} onReady={markThemeReady}>
+     |     ^
+  20 |       <ToastProvider>
+  21 |         {children}
+  22 |         <Toaster />
+Call Stack
+  Theme (src/components/Theme.tsx:19:5)
+  Providers (src/components/Providers.tsx:41:21)
+  RootLayout (src/app/_layout.tsx:40:5)

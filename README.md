@@ -8,6 +8,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Optional Redux slice for wiring appearance and color into your store
+- Wrapper components (`Button`, `Chip`, `FAB`, `IconButton`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
 
 ## Installation
@@ -48,6 +49,29 @@ export default function App() {
   {/* your app */}
 </AutoPaperProvider>
 ```
+
+### With component defaults
+
+Pass a `defaults` object to `Provider` to set prop defaults for any of the included wrapper components. Each component merges defaults under its own props, so per-instance props always win:
+
+```tsx
+import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
+
+<AutoPaperProvider
+  appearance={appearance}
+  color={color}
+  defaults={{
+    Button: { mode: 'contained' },
+    Chip: { compact: true },
+  }}
+>
+  <Button>Save</Button>       {/* mode="contained" from defaults */}
+  <Button mode="text">Cancel</Button>  {/* overrides default */}
+  <Chip>Tag</Chip>            {/* compact=true from defaults */}
+</AutoPaperProvider>
+```
+
+Available wrapper components: `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
 
 ### With Redux
 
@@ -132,6 +156,7 @@ export default function App() {
 | `appearance` | `'system' \| 'light' \| 'dark'` | Appearance mode |
 | `color` | `string` | Seed color (hex, rgb, or CSS name) |
 | `children` | `ReactNode` | |
+| `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
@@ -142,6 +167,28 @@ Returns `MD3Theme | null`. `null` on the first render while the theme computes.
 
 ```ts
 const theme = useComputedTheme('system', '#6750a4')
+```
+
+### `PaperDefaults` / `usePaperDefaults`
+
+`PaperDefaults` is the type for the `defaults` prop on `Provider`:
+
+```ts
+type PaperDefaults = {
+  Button?: Partial<ButtonProps>
+  Chip?: Partial<ChipProps>
+  FAB?: Partial<FABProps>
+  IconButton?: Partial<IconButtonProps>
+  TextInput?: Partial<TextInputProps>
+}
+```
+
+Use `usePaperDefaults` if you need to read the defaults in a custom component:
+
+```ts
+import { usePaperDefaults } from '@rific/auto-paper'
+
+const defaults = usePaperDefaults()
 ```
 
 ### `createThemeReducer(initialState?)`
