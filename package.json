@@ -54,7 +54,7 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit",
-    "preversion": "npm run lint && npm test"
+    "preversion": "npm run lint && npm test && npm run build"
   },
   "devDependencies": {
     "@reduxjs/toolkit": "^2.0.0",
@@ -84,9 +84,15 @@
     "typescript-eslint": "^8.59.3"
   },
   "peerDependencies": {
+    "expo-navigation-bar": ">=4.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.73.0",
     "react-native-paper": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-navigation-bar": {
+      "optional": true
+    }
   },
   "optionalDependencies": {
     "@reduxjs/toolkit": "^2.0.0"

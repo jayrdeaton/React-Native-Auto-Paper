@@ -8,7 +8,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Optional Redux slice for wiring appearance and color into your store
-- Wrapper components (`Button`, `Chip`, `FAB`, `IconButton`, `TextInput`) with prop defaults via context
+- Wrapper components (`Appbar`, `BottomNavigation`, `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
 
 ## Installation
@@ -21,6 +21,12 @@ Peer dependencies:
 
 ```bash
 npm install react-native react-native-paper
+```
+
+Optional — needed only if you use `BottomNavigation` on Android (syncs the system navigation bar color):
+
+```bash
+npm install expo-navigation-bar
 ```
 
 ## Usage
@@ -61,6 +67,8 @@ import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
   appearance={appearance}
   color={color}
   defaults={{
+    AppbarHeader: { elevated: true },
+    BottomNavigation: { labeled: false },
     Button: { mode: 'contained' },
     Chip: { compact: true },
   }}
@@ -71,7 +79,7 @@ import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
 </AutoPaperProvider>
 ```
 
-Available wrapper components: `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
+Available wrapper components: `Appbar`, `BottomNavigation`, `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
 
 ### With Redux
 
@@ -169,12 +177,46 @@ Returns `MD3Theme | null`. `null` on the first render while the theme computes.
 const theme = useComputedTheme('system', '#6750a4')
 ```
 
+### `Appbar`
+
+A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs `StatusBar` background color and bar style to the current theme surface color.
+
+```tsx
+import { Appbar } from '@rific/auto-paper'
+
+<Appbar.Header>
+  <Appbar.BackAction onPress={router.back} />
+  <Appbar.Content title="Settings" />
+  <Appbar.Action icon="magnify" onPress={onSearch} />
+</Appbar.Header>
+```
+
+`Appbar.Content`, `Appbar.Action`, and `Appbar.BackAction` are re-exported directly from `react-native-paper`. Only `Appbar.Header` is wrapped — it applies `AppbarHeader` defaults from context and renders the synced `StatusBar`.
+
+### `BottomNavigation`
+
+A thin wrapper around `react-native-paper`'s `BottomNavigation` that automatically syncs the Android system navigation bar color and button style to the current theme surface color (requires `expo-navigation-bar`; silently no-ops when not installed).
+
+```tsx
+import { BottomNavigation } from '@rific/auto-paper'
+
+<BottomNavigation
+  navigationState={{ index, routes }}
+  onIndexChange={setIndex}
+  renderScene={BottomNavigation.SceneMap({ home: HomeScreen, settings: SettingsScreen })}
+/>
+```
+
+`BottomNavigation.Bar` and `BottomNavigation.SceneMap` are also available and both sync the navigation bar.
+
 ### `PaperDefaults` / `usePaperDefaults`
 
 `PaperDefaults` is the type for the `defaults` prop on `Provider`:
 
 ```ts
 type PaperDefaults = {
+  AppbarHeader?: Partial<AppbarHeaderProps>
+  BottomNavigation?: Partial<BottomNavigationProps<BottomNavigationRoute>>
   Button?: Partial<ButtonProps>
   Chip?: Partial<ChipProps>
   FAB?: Partial<FABProps>
