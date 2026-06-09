@@ -1,6 +1,6 @@
 {
   "name": "@rific/auto-paper",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Adaptive react-native-paper theming: triadic palette from a seed color + system/light/dark appearance",
   "keywords": [
     "react-native",
@@ -70,6 +70,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react-native": "^5.0.0",
     "eslint-plugin-simple-import-sort": "^13.0.0",
+    "expo-blur": "^56.0.3",
     "expo-navigation-bar": "^56.0.3",
     "jest": "^30.0.0",
     "jest-environment-jsdom": "^30.0.0",
@@ -85,15 +86,10 @@
     "typescript-eslint": "^8.59.3"
   },
   "peerDependencies": {
-    "expo-navigation-bar": ">=4.0.0",
+    "expo-blur": ">=14.0.0",
     "react": ">=18.0.0",
     "react-native": ">=0.73.0",
     "react-native-paper": ">=5.0.0"
-  },
-  "peerDependenciesMeta": {
-    "expo-navigation-bar": {
-      "optional": true
-    }
   },
   "optionalDependencies": {
     "@reduxjs/toolkit": "^2.0.0"

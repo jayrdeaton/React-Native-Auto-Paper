@@ -3,18 +3,15 @@ import { Platform } from 'react-native'
 import { BottomNavigation as PaperBottomNavigation, type BottomNavigationProps, type BottomNavigationRoute, useTheme } from 'react-native-paper'
 
 import { usePaperDefaults } from '../PaperDefaultsContext'
+import { useNavBarContext } from '../ThemeProvider'
 
 function useNavigationBarSync() {
   const theme = useTheme()
+  const { onNavBarChange } = useNavBarContext()
   useEffect(() => {
-    if (Platform.OS !== 'android') return
-    import('expo-navigation-bar')
-      .then(({ setBackgroundColorAsync, setButtonStyleAsync }) => {
-        setBackgroundColorAsync(theme.colors.surface)
-        setButtonStyleAsync(theme.dark ? 'light' : 'dark')
-      })
-      .catch(() => {})
-  }, [theme])
+    if (Platform.OS !== 'android' || !onNavBarChange) return
+    onNavBarChange(theme.colors.surface, theme.dark)
+  }, [theme, onNavBarChange])
 }
 
 function BottomNavigationComponent<Route extends BottomNavigationRoute>(props: BottomNavigationProps<Route>) {

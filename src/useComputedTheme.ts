@@ -3,12 +3,13 @@ import { Appearance } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, MD3Theme } from 'react-native-paper'
 
 import { getBlendedColor } from './utils/getBlendedColor'
-import { getTriadicPalette } from './utils/getTriadicPalette'
+import { getTonalColor } from './utils/getTonalColor'
+import { type ColorHarmony, getTriadicPalette } from './utils/getTriadicPalette'
 import { isDarkColor } from './utils/isDarkColor'
 
 export type ThemeAppearance = 'system' | 'light' | 'dark'
 
-export function useComputedTheme(appearance: ThemeAppearance, color: string): MD3Theme | null {
+export function useComputedTheme(appearance: ThemeAppearance, color: string, harmony: ColorHarmony = 'split-complementary'): MD3Theme | null {
   const [theme, setTheme] = useState<MD3Theme | null>(null)
 
   const computeTheme = useCallback(() => {
@@ -25,27 +26,28 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string): MD
       }
     }
 
-    const palette = getTriadicPalette(color)
+    const palette = getTriadicPalette(color, harmony)
     const surface = base.colors.surface
 
     _theme.colors.primary = palette.primary
-    _theme.colors.onPrimary = isDarkColor(palette.primary) ? '#ffffff' : '#000000'
+    _theme.colors.onPrimary = getTonalColor(palette.primary, isDarkColor(palette.primary) ? 0.95 : 0.08)
     _theme.colors.primaryContainer = getBlendedColor(palette.primary, surface, 0.15)
-    _theme.colors.onPrimaryContainer = isDarkColor(_theme.colors.primaryContainer) ? '#ffffff' : '#000000'
+    _theme.colors.onPrimaryContainer = getTonalColor(palette.primary, isDarkColor(_theme.colors.primaryContainer) ? 0.92 : 0.12)
 
     _theme.colors.secondary = palette.secondary
-    _theme.colors.onSecondary = isDarkColor(palette.secondary) ? '#ffffff' : '#000000'
+    _theme.colors.onSecondary = getTonalColor(palette.secondary, isDarkColor(palette.secondary) ? 0.95 : 0.08)
     _theme.colors.secondaryContainer = getBlendedColor(palette.secondary, surface, 0.15)
-    _theme.colors.onSecondaryContainer = isDarkColor(_theme.colors.secondaryContainer) ? '#ffffff' : '#000000'
+    _theme.colors.onSecondaryContainer = getTonalColor(palette.secondary, isDarkColor(_theme.colors.secondaryContainer) ? 0.92 : 0.12)
 
     _theme.colors.tertiary = palette.tertiary
-    _theme.colors.onTertiary = isDarkColor(palette.tertiary) ? '#ffffff' : '#000000'
+    _theme.colors.onTertiary = getTonalColor(palette.tertiary, isDarkColor(palette.tertiary) ? 0.95 : 0.08)
     _theme.colors.tertiaryContainer = getBlendedColor(palette.tertiary, surface, 0.15)
-    _theme.colors.onTertiaryContainer = isDarkColor(_theme.colors.tertiaryContainer) ? '#ffffff' : '#000000'
+    _theme.colors.onTertiaryContainer = getTonalColor(palette.tertiary, isDarkColor(_theme.colors.tertiaryContainer) ? 0.92 : 0.12)
 
     const blended = getBlendedColor(color, palette.secondary, 0.5)
     const tintSurface = (alpha: number) => getBlendedColor(blended, surface, alpha)
 
+    _theme.colors.background = base.dark ? '#0F0F0F' : tintSurface(0.12)
     _theme.colors.surface = surface
     _theme.colors.surfaceVariant = tintSurface(0.2)
     _theme.colors.outline = getBlendedColor(color, base.colors.outline, 0.45)
@@ -62,7 +64,7 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string): MD
     }
 
     setTheme(_theme)
-  }, [appearance, color])
+  }, [appearance, color, harmony])
 
   useEffect(() => {
     computeTheme()

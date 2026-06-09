@@ -1,13 +1,24 @@
 import { getHex } from './getHex'
 import { getRgb } from './getRgb'
 
+export type ColorHarmony = 'triadic' | 'split-complementary' | 'analogous' | 'square' | 'complementary' | 'double-split'
+
 export type TriadicPalette = {
   primary: string
   secondary: string
   tertiary: string
 }
 
-export function getTriadicPalette(primaryColor: string): TriadicPalette {
+const HARMONY_OFFSETS: Record<ColorHarmony, [number, number]> = {
+  analogous: [1 / 12, 2 / 12],
+  complementary: [1 / 4, 1 / 2],
+  'double-split': [1 / 12, 11 / 12],
+  'split-complementary': [5 / 12, 7 / 12],
+  square: [1 / 4, 3 / 4],
+  triadic: [1 / 3, 2 / 3]
+}
+
+export function getTriadicPalette(primaryColor: string, harmony: ColorHarmony = 'split-complementary'): TriadicPalette {
   const rgb = getRgb(primaryColor)
   if (!rgb) throw new Error(`Invalid color format: ${primaryColor}`)
 
@@ -39,10 +50,12 @@ export function getTriadicPalette(primaryColor: string): TriadicPalette {
     }
   }
 
+  const [o1, o2] = HARMONY_OFFSETS[harmony]
+
   return {
     primary: getHex(primaryColor) ?? primaryColor,
-    secondary: hslToHex((h + 1 / 3) % 1, s, l),
-    tertiary: hslToHex((h + 2 / 3) % 1, s, l)
+    secondary: hslToHex((h + o1) % 1, s, l),
+    tertiary: hslToHex((h + o2) % 1, s, l)
   }
 }
 

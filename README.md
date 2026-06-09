@@ -1,10 +1,10 @@
 # @rific/auto-paper
 
-Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-native-paper/). Give it one color and an appearance setting — it generates a triadic MD3 palette and handles light/dark/system mode automatically.
+Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-native-paper/). Give it one color and an appearance setting — it generates an MD3 palette and handles light/dark/system mode automatically.
 
 ## Features
 
-- Triadic color palette from a single seed color (primary → secondary → tertiary, 120° apart on the color wheel)
+- Color harmony palette from a single seed color (primary → secondary → tertiary) — 6 harmony modes available, defaulting to `split-complementary`
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Optional Redux slice for wiring appearance and color into your store
@@ -55,6 +55,23 @@ export default function App() {
   {/* your app */}
 </AutoPaperProvider>
 ```
+
+### Choosing a color harmony
+
+The `harmony` prop controls how secondary and tertiary colors are derived from your seed. The default is `split-complementary`, which works well for most apps — it keeps secondary and tertiary close together in hue so they feel like a family of accents rather than three competing dominant colors.
+
+```tsx
+<AutoPaperProvider appearance={appearance} color={color} harmony="split-complementary">
+```
+
+| Harmony | Offsets | Character |
+|---|---|---|
+| `split-complementary` *(default)* | 0°, +150°, +210° | Harmonious contrast — flanks the complement by ±30° |
+| `triadic` | 0°, +120°, +240° | Equilateral — maximum variety, three equal-weight colors |
+| `analogous` | 0°, +30°, +60° | Cohesive, natural — neighboring hues |
+| `square` | 0°, +90°, +270° | Balanced, structured — right-angle symmetry |
+| `complementary` | 0°, +90°, +180° | Bold — accent at 90° plus true opposite |
+| `double-split` | 0°, +30°, +330° | Tight — flanks the primary by ±30° |
 
 ### With component defaults
 
@@ -163,18 +180,20 @@ export default function App() {
 |---|---|---|
 | `appearance` | `'system' \| 'light' \| 'dark'` | Appearance mode |
 | `color` | `string` | Seed color (hex, rgb, or CSS name) |
+| `harmony` | `ColorHarmony` | Color harmony mode (default: `'split-complementary'`) |
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
 
-### `useComputedTheme(appearance, color)`
+### `useComputedTheme(appearance, color, harmony?)`
 
 Returns `MD3Theme | null`. `null` on the first render while the theme computes.
 
 ```ts
 const theme = useComputedTheme('system', '#6750a4')
+const theme = useComputedTheme('system', '#6750a4', 'triadic')
 ```
 
 ### `Appbar`
@@ -264,9 +283,14 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 
 ```ts
 import { getTriadicPalette, getBlendedColor, isDarkColor, getRgb, getHex } from '@rific/auto-paper'
+import type { ColorHarmony } from '@rific/auto-paper'
 
-getTriadicPalette('#ff0000')
-// → { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' }
+getTriadicPalette('#6750a4')                          // split-complementary (default)
+getTriadicPalette('#6750a4', 'triadic')               // → { primary, secondary, tertiary }
+getTriadicPalette('#6750a4', 'analogous')
+getTriadicPalette('#6750a4', 'square')
+getTriadicPalette('#6750a4', 'complementary')
+getTriadicPalette('#6750a4', 'double-split')
 
 getBlendedColor('#ff0000', '#0000ff', 0.5)  // → '#800080'
 isDarkColor('#6750a4')                       // → true
