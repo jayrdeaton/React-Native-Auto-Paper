@@ -1,7 +1,7 @@
 export { AppearancePicker } from './components/AppearancePicker'
 export { Appbar } from './components/Appbar'
 export type { SeedColor } from './components/ColorPicker'
-export { ColorPicker } from './components/ColorPicker'
+export { ColorPicker, defaultColors } from './components/ColorPicker'
 export { HarmonyPicker } from './components/HarmonyPicker'
 export type { BlurViewProps } from './components/BlurView'
 export { BlurView } from './components/BlurView'

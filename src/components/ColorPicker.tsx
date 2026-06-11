@@ -7,7 +7,7 @@ import { Dialog } from './Dialog'
 
 export type SeedColor = { label: string; value: string }
 
-const DEFAULT_COLORS: SeedColor[] = [
+export const defaultColors: SeedColor[] = [
   { label: 'Red', value: '#f44336' },
   { label: 'Coral', value: '#ff5722' },
   { label: 'Orange', value: '#ff6d00' },
@@ -35,7 +35,7 @@ type Props = {
   blur?: boolean
 }
 
-export const ColorPicker = ({ value, onChange, colors = DEFAULT_COLORS, blur: blurProp }: Props) => {
+export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blurProp }: Props) => {
   const blur = useBlur(blurProp)
   const [open, setOpen] = useState(false)
 
