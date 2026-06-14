@@ -17,6 +17,7 @@ module.exports = {
           module: 'CommonJS',
           moduleResolution: 'node',
           ignoreDeprecations: '5.0',
+          lib: ['es2015', 'dom'],
           types: ['jest', 'node']
         }
       }

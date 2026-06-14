@@ -37,11 +37,8 @@ npm install expo-navigation-bar
 import { Provider as AutoPaperProvider } from '@rific/auto-paper'
 
 export default function App() {
-  const [appearance, setAppearance] = useState<'system' | 'light' | 'dark'>('system')
-  const [color, setColor] = useState('#6750a4')
-
   return (
-    <AutoPaperProvider appearance={appearance} color={color}>
+    <AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4' }}>
       {/* your app */}
     </AutoPaperProvider>
   )
@@ -51,9 +48,25 @@ export default function App() {
 `Provider` renders `null` on the first render while the theme computes, then wraps your app in `PaperProvider` with the computed theme, a matching `StatusBar`, and a background `View`. Use `onReady` to hook into that moment — e.g. to dismiss a splash screen:
 
 ```tsx
-<AutoPaperProvider appearance={appearance} color={color} onReady={SplashScreen.hideAsync}>
+<AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4' }} onReady={SplashScreen.hideAsync}>
   {/* your app */}
 </AutoPaperProvider>
+```
+
+Update theme settings from anywhere inside the tree using `useThemeSettings`:
+
+```tsx
+import { useThemeSettings } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  const { settings, set } = useThemeSettings()
+  return (
+    <>
+      <Button onPress={() => set({ appearance: 'dark' })}>Dark mode</Button>
+      <Button onPress={() => set({ color: '#e91e63' })}>Change color</Button>
+    </>
+  )
+}
 ```
 
 ### Choosing a color harmony
@@ -61,7 +74,7 @@ export default function App() {
 The `harmony` prop controls how secondary and tertiary colors are derived from your seed. The default is `split-complementary`, which works well for most apps — it keeps secondary and tertiary close together in hue so they feel like a family of accents rather than three competing dominant colors.
 
 ```tsx
-<AutoPaperProvider appearance={appearance} color={color} harmony="split-complementary">
+<AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4', harmony: 'split-complementary' }}>
 ```
 
 | Harmony | Offsets | Character |
@@ -81,8 +94,7 @@ Pass a `defaults` object to `Provider` to set prop defaults for any of the inclu
 import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
 
 <AutoPaperProvider
-  appearance={appearance}
-  color={color}
+  initialValue={{ appearance: 'system', color: '#6750a4' }}
   defaults={{
     AppbarHeader: { elevated: true },
     BottomNavigation: { labeled: false },
@@ -124,7 +136,7 @@ import { Provider as AutoPaperProvider } from '@rific/auto-paper'
 export default function App() {
   const { appearance, color } = useSelector((state: RootState) => state.theme)
   return (
-    <AutoPaperProvider appearance={appearance} color={color} onReady={SplashScreen.hideAsync}>
+    <AutoPaperProvider initialValue={{ appearance, color }} onReady={SplashScreen.hideAsync}>
       {/* your app */}
     </AutoPaperProvider>
   )
@@ -178,14 +190,37 @@ export default function App() {
 
 | Prop | Type | Description |
 |---|---|---|
-| `appearance` | `'system' \| 'light' \| 'dark'` | Appearance mode |
-| `color` | `string` | Seed color (hex, rgb, or CSS name) |
-| `harmony` | `ColorHarmony` | Color harmony mode (default: `'split-complementary'`) |
+| `initialValue` | `Partial<ThemeSettings>` | Initial theme settings — `appearance`, `color`, `harmony`, `blur`, `blurTint`. Defaults from `defaultThemeSettings` fill any omitted fields. |
+| `onChange` | `(settings: ThemeSettings) => void` | Called whenever settings change via `useThemeSettings().set()` |
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
+
+`ThemeSettings` fields:
+
+| Field | Type | Default |
+|---|---|---|
+| `appearance` | `'system' \| 'light' \| 'dark'` | `'system'` |
+| `color` | `string` | `'#6750a4'` |
+| `harmony` | `ColorHarmony` | `'split-complementary'` |
+| `blur` | `boolean` | `true` |
+| `blurTint` | `number` | `0.2` |
+
+### `useThemeSettings()`
+
+Returns `{ settings: ThemeSettings, set: (patch: Partial<ThemeSettings>) => void }`. Use this hook from any component inside `Provider` to read or update the current theme settings.
+
+```tsx
+import { useThemeSettings } from '@rific/auto-paper'
+
+const { settings, set } = useThemeSettings()
+
+set({ appearance: 'dark' })
+set({ color: '#e91e63' })
+set({ harmony: 'triadic' })
+```
 
 ### `useComputedTheme(appearance, color, harmony?)`
 
@@ -227,6 +262,48 @@ import { BottomNavigation } from '@rific/auto-paper'
 ```
 
 `BottomNavigation.Bar` and `BottomNavigation.SceneMap` are also available and both sync the navigation bar.
+
+### `Chip`
+
+A thin wrapper around `react-native-paper`'s `Chip` that adds a `variant` prop for applying theme-derived container colors.
+
+```tsx
+import { Chip } from '@rific/auto-paper'
+
+<Chip>Default</Chip>
+<Chip variant="primary">Primary</Chip>
+<Chip variant="secondary">Secondary</Chip>
+<Chip variant="tertiary">Tertiary</Chip>
+<Chip variant="surface">Surface</Chip>
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `variant` | `'primary' \| 'secondary' \| 'tertiary' \| 'surface'` | Applies the matching container color as background and its `on*` counterpart as `selectedColor` |
+| ...all `ChipProps` | | All props from `react-native-paper`'s `Chip` are supported |
+
+`ChipProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `ChipProps` with the `variant` field. Use `PaperChipProps` if you need the base paper type.
+
+### `IconButton`
+
+A thin wrapper around `react-native-paper`'s `IconButton` that adds a `variant` prop for applying theme-derived container and icon colors.
+
+```tsx
+import { IconButton } from '@rific/auto-paper'
+
+<IconButton icon="pencil" />
+<IconButton icon="pencil" variant="primary" />
+<IconButton icon="pencil" variant="secondary" />
+<IconButton icon="pencil" variant="tertiary" />
+<IconButton icon="pencil" variant="surface" />
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `variant` | `'primary' \| 'secondary' \| 'tertiary' \| 'surface'` | Sets `containerColor` and `iconColor` from the matching theme color pair |
+| ...all `IconButtonProps` | | All props from `react-native-paper`'s `IconButton` are supported — explicit `containerColor` or `iconColor` override the variant |
+
+`IconButtonProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `IconButtonProps` with the `variant` field. Use `PaperIconButtonProps` if you need the base paper type.
 
 ### `PaperDefaults` / `usePaperDefaults`
 

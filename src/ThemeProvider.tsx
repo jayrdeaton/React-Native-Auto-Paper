@@ -11,7 +11,7 @@ const NavBarContext = createContext<NavBarContextType>({})
 export const useNavBarContext = () => useContext(NavBarContext)
 
 export type ProviderProps = {
-  overrides?: Partial<ThemeSettings>
+  initialValue?: Partial<ThemeSettings>
   onChange?: (settings: ThemeSettings) => void
   children: ReactNode
   defaults?: PaperDefaults
@@ -21,8 +21,8 @@ export type ProviderProps = {
   style?: StyleProp<ViewStyle>
 }
 
-export function Provider({ overrides, onChange, children, defaults, onNavBarChange, onReady, statusBarProps, style }: ProviderProps) {
-  const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...overrides }))
+export function Provider({ initialValue, onChange, children, defaults, onNavBarChange, onReady, statusBarProps, style }: ProviderProps) {
+  const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...initialValue }))
 
   const set = useCallback(
     (patch: Partial<ThemeSettings>) => {
