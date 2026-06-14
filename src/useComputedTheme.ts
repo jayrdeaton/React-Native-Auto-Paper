@@ -47,7 +47,7 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string, har
     const blended = getBlendedColor(color, palette.secondary, 0.5)
     const tintSurface = (alpha: number) => getBlendedColor(blended, surface, alpha)
 
-    _theme.colors.background = base.dark ? '#0F0F0F' : tintSurface(0.12)
+    _theme.colors.background = base.dark ? '#0F0F0F' : '#F0F0F0'
     _theme.colors.surface = surface
     _theme.colors.surfaceVariant = tintSurface(0.2)
     _theme.colors.outline = getBlendedColor(color, base.colors.outline, 0.45)

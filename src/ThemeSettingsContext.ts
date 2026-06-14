@@ -14,7 +14,7 @@ export type ThemeSettings = {
 export const defaultThemeSettings: ThemeSettings = {
   appearance: 'system',
   blur: true,
-  blurTint: 0.5,
+  blurTint: 0.2,
   color: '#6750a4',
   harmony: 'split-complementary'
 }
