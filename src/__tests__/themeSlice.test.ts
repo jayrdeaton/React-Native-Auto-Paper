@@ -1,6 +1,6 @@
 import { themeActions, themeReducer, ThemeState } from '../redux/themeSlice'
 
-const initial: ThemeState = { appearance: 'system', color: '#6750a4' }
+const initial: ThemeState = { appearance: 'system', blur: true, color: '#6750a4', harmony: 'split-complementary' }
 
 describe('themeSlice', () => {
   it('has correct initial state', () => {
