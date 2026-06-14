@@ -1,15 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Animated, TouchableWithoutFeedback, StyleSheet, View } from 'react-native'
-import {
-  Dialog as PaperDialog,
-  type DialogActionsProps,
-  type DialogContentProps,
-  type DialogProps as PaperDialogProps,
-  type DialogScrollAreaProps,
-  type DialogTitleProps,
-  Portal,
-  useTheme,
-} from 'react-native-paper'
+import { Animated, StyleSheet, TouchableWithoutFeedback, View } from 'react-native'
+import { Dialog as PaperDialog, type DialogActionsProps, type DialogContentProps, type DialogProps as PaperDialogProps, type DialogScrollAreaProps, type DialogTitleProps, Portal, useTheme } from 'react-native-paper'
 
 import { useBlur } from '../BlurContext'
 import { BlurView } from './BlurView'
@@ -29,9 +20,7 @@ function DialogComponent({ blur: blurProp, visible, onDismiss, children, style, 
       setMounted(true)
       Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start()
     } else {
-      Animated.timing(opacity, { toValue: 0, duration: 150, useNativeDriver: true }).start(() =>
-        setMounted(false)
-      )
+      Animated.timing(opacity, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => setMounted(false))
     }
   }, [visible])
 
@@ -51,10 +40,8 @@ function DialogComponent({ blur: blurProp, visible, onDismiss, children, style, 
         <TouchableWithoutFeedback onPress={onDismiss}>
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }]} />
         </TouchableWithoutFeedback>
-        <View style={styles.wrapper} pointerEvents="box-none">
-          <BlurView style={[styles.card, { borderRadius: roundness * 7 }]}>
-            {children}
-          </BlurView>
+        <View style={styles.wrapper} pointerEvents='box-none'>
+          <BlurView style={[styles.card, { borderRadius: roundness * 7 }]}>{children}</BlurView>
         </View>
       </Animated.View>
     </Portal>
@@ -70,5 +57,5 @@ export const Dialog = DialogComponent
 
 const styles = StyleSheet.create({
   card: { overflow: 'hidden' },
-  wrapper: { flex: 1, justifyContent: 'center', paddingHorizontal: 26 },
+  wrapper: { flex: 1, justifyContent: 'center', paddingHorizontal: 26 }
 })

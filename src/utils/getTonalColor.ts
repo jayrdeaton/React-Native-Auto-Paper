@@ -31,13 +31,34 @@ export const getTonalColor = (color: string, lightness: number): string => {
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
   const m = targetL - c / 2
 
-  let r2 = 0, g2 = 0, b2 = 0
-  if (h < 60)        { r2 = c; g2 = x; b2 = 0 }
-  else if (h < 120)  { r2 = x; g2 = c; b2 = 0 }
-  else if (h < 180)  { r2 = 0; g2 = c; b2 = x }
-  else if (h < 240)  { r2 = 0; g2 = x; b2 = c }
-  else if (h < 300)  { r2 = x; g2 = 0; b2 = c }
-  else               { r2 = c; g2 = 0; b2 = x }
+  let r2 = 0,
+    g2 = 0,
+    b2 = 0
+  if (h < 60) {
+    r2 = c
+    g2 = x
+    b2 = 0
+  } else if (h < 120) {
+    r2 = x
+    g2 = c
+    b2 = 0
+  } else if (h < 180) {
+    r2 = 0
+    g2 = c
+    b2 = x
+  } else if (h < 240) {
+    r2 = 0
+    g2 = x
+    b2 = c
+  } else if (h < 300) {
+    r2 = x
+    g2 = 0
+    b2 = c
+  } else {
+    r2 = c
+    g2 = 0
+    b2 = x
+  }
 
   const toInt = (n: number) => Math.round((n + m) * 255)
   return getHex(`rgb(${toInt(r2)}, ${toInt(g2)}, ${toInt(b2)})`) ?? color

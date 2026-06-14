@@ -1,6 +1,6 @@
 import { BlurView as ExpoBlurView, type BlurViewProps as ExpoBlurViewProps } from 'expo-blur'
 import { type ReactNode, useContext } from 'react'
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native'
+import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { useTheme } from 'react-native-paper'
 
 import { ThemeSettingsContext } from '../ThemeSettingsContext'
@@ -18,9 +18,7 @@ export const BlurView = ({ blur = true, children, elevation, style, ...props }: 
   const { dark, colors } = useTheme()
   const { settings } = useContext(ThemeSettingsContext)
   const tintOpacity = elevation !== undefined ? ELEVATION_OPACITY[elevation] : 0
-  const tint = tintOpacity > 0
-    ? <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary, opacity: tintOpacity }]} />
-    : null
+  const tint = tintOpacity > 0 ? <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary, opacity: tintOpacity }]} /> : null
   if (blur)
     return (
       <ExpoBlurView {...props} tint={dark ? 'dark' : 'light'} style={style}>
@@ -29,5 +27,10 @@ export const BlurView = ({ blur = true, children, elevation, style, ...props }: 
         {children}
       </ExpoBlurView>
     )
-  return <View style={[{ backgroundColor: colors.surface }, style]}>{tint}{children}</View>
+  return (
+    <View style={[{ backgroundColor: colors.surface }, style]}>
+      {tint}
+      {children}
+    </View>
+  )
 }

@@ -19,7 +19,7 @@ const MenuComponent = ({ blur: blurProp, children, ...props }: MenuProps) => {
 }
 
 export const Menu = Object.assign(MenuComponent, {
-  Item: PaperMenu.Item as React.FC<MenuItemProps>,
+  Item: PaperMenu.Item as React.FC<MenuItemProps>
 })
 
 const styles = StyleSheet.create({

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Button } from 'react-native-paper'
 
-import type { ColorHarmony } from '../utils/getTriadicPalette'
 import { useBlur } from '../BlurContext'
+import type { ColorHarmony } from '../utils/getTriadicPalette'
 import { Menu } from './Menu'
 
 const HARMONIES: { label: string; value: ColorHarmony; icon: string }[] = [
