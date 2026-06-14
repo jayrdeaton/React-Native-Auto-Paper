@@ -56,6 +56,10 @@ const makeTheme = (dark: boolean) => ({
 export const MD3LightTheme = makeTheme(false)
 export const MD3DarkTheme = makeTheme(true)
 
+export const Chip = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
+
+export const IconButton = jest.fn(() => null)
+
 export const Provider = ({ children }: { children?: React.ReactNode }) => children ?? null
 
 export const useTheme = jest.fn(() => MD3LightTheme)
