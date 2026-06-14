@@ -13,10 +13,4 @@ type Props = {
   onChange: (appearance: ThemeAppearance) => void
 }
 
-export const AppearancePicker = ({ value, onChange }: Props) => (
-  <SegmentedButtons
-    value={value}
-    onValueChange={(v) => onChange(v as ThemeAppearance)}
-    buttons={APPEARANCES.map((a) => ({ value: a.value, label: a.label, icon: a.icon }))}
-  />
-)
+export const AppearancePicker = ({ value, onChange }: Props) => <SegmentedButtons value={value} onValueChange={(v) => onChange(v as ThemeAppearance)} buttons={APPEARANCES.map((a) => ({ value: a.value, label: a.label, icon: a.icon }))} />
