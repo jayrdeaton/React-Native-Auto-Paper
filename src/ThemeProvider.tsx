@@ -24,16 +24,19 @@ export type ProviderProps = {
 export function Provider({ initialValue, onChange, children, defaults, onNavBarChange, onReady, statusBarProps, style }: ProviderProps) {
   const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...initialValue }))
 
-  const set = useCallback(
-    (patch: Partial<ThemeSettings>) => {
-      setSettings((prev) => {
-        const next = { ...prev, ...patch }
-        onChange?.(next)
-        return next
-      })
-    },
-    [onChange]
-  )
+  const set = useCallback((patch: Partial<ThemeSettings>) => {
+    setSettings((prev) => ({ ...prev, ...patch }))
+  }, [])
+
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const prevSettings = useRef(settings)
+  useEffect(() => {
+    if (prevSettings.current !== settings) {
+      prevSettings.current = settings
+      onChangeRef.current?.(settings)
+    }
+  }, [settings])
 
   const theme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
   const called = useRef(false)
