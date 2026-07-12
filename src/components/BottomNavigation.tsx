@@ -28,6 +28,7 @@ function Bar(props: BarProps) {
 }
 
 BottomNavigationComponent.Bar = Bar
-BottomNavigationComponent.SceneMap = PaperBottomNavigation.SceneMap
+// Guard module-scope access: under some CJS interop (e.g. jest) PaperBottomNavigation may be undefined at import time.
+BottomNavigationComponent.SceneMap = PaperBottomNavigation?.SceneMap
 
 export const BottomNavigation = BottomNavigationComponent

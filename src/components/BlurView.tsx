@@ -6,29 +6,36 @@ import { useTheme } from 'react-native-paper'
 import { ThemeSettingsContext } from '../ThemeSettingsContext'
 
 const ELEVATION_OPACITY: Record<number, number> = { 0: 0, 1: 0.05, 2: 0.08, 3: 0.11, 4: 0.12, 5: 0.14 }
+const VARIANT_TINT_OPACITY = { light: 0.12, dark: 0.18 }
 
 export type BlurViewProps = ExpoBlurViewProps & {
   blur?: boolean
   children?: ReactNode
   elevation?: 0 | 1 | 2 | 3 | 4 | 5
   style?: StyleProp<ViewStyle>
+  tintColor?: string
+  tintOpacity?: number
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'error' | 'surface' | 'surfaceVariant'
 }
 
-export const BlurView = ({ blur = true, children, elevation, style, ...props }: BlurViewProps) => {
+export const BlurView = ({ blur = true, children, elevation, style, tintColor, tintOpacity, variant = 'surface', ...props }: BlurViewProps) => {
   const { dark, colors } = useTheme()
   const { settings } = useContext(ThemeSettingsContext)
-  const tintOpacity = elevation !== undefined ? ELEVATION_OPACITY[elevation] : 0
-  const tint = tintOpacity > 0 ? <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.primary, opacity: tintOpacity }]} /> : null
+  const surfaceColor = variant === 'surfaceVariant' ? colors.surfaceVariant : colors.surface
+  const variantColor = variant === 'primary' ? colors.primary : variant === 'secondary' ? colors.secondary : variant === 'tertiary' ? colors.tertiary : variant === 'error' ? colors.error : undefined
+  const resolvedTintColor = tintColor ?? variantColor ?? (elevation !== undefined ? colors.primary : undefined)
+  const resolvedTintOpacity = tintOpacity ?? (tintColor ? (dark ? 0.24 : 0.16) : variantColor ? (dark ? VARIANT_TINT_OPACITY.dark : VARIANT_TINT_OPACITY.light) : elevation !== undefined ? ELEVATION_OPACITY[elevation] : 0)
+  const tint = resolvedTintColor && resolvedTintOpacity > 0 ? <View style={[StyleSheet.absoluteFill, { backgroundColor: resolvedTintColor, opacity: resolvedTintOpacity }]} /> : null
   if (blur)
     return (
       <ExpoBlurView {...props} tint={dark ? 'dark' : 'light'} style={style}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface, opacity: settings.blurTint }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: surfaceColor, opacity: settings.blurTint }]} />
         {tint}
         {children}
       </ExpoBlurView>
     )
   return (
-    <View style={[{ backgroundColor: colors.surface }, style]}>
+    <View style={[{ backgroundColor: surfaceColor }, style]}>
       {tint}
       {children}
     </View>
