@@ -17,17 +17,20 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 npm install @rific/auto-paper
 ```
 
-Peer dependencies:
+Required peer dependency:
 
 ```bash
-npm install react-native react-native-paper
+npm install react-native-paper
 ```
 
-Optional — needed only if you use `BottomNavigation` on Android (syncs the system navigation bar color):
+Optional peer dependencies:
 
 ```bash
-npm install expo-navigation-bar
+npm install expo-blur             # frosted-glass BlurView; without it BlurView renders its solid (non-blur) fallback
+npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
 ```
+
+The exported Redux slice has no dependency on `@reduxjs/toolkit` — it works with RTK stores, vanilla Redux, or no Redux at all.
 
 ## Usage
 
@@ -194,6 +197,7 @@ export default function App() {
 | `onChange` | `(settings: ThemeSettings) => void` | Called whenever settings change via `useThemeSettings().set()` |
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
+| `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `expo-navigation-bar` icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
@@ -249,7 +253,7 @@ import { Appbar } from '@rific/auto-paper'
 
 ### `BottomNavigation`
 
-A thin wrapper around `react-native-paper`'s `BottomNavigation` that automatically syncs the Android system navigation bar color and button style to the current theme surface color (requires `expo-navigation-bar`; silently no-ops when not installed).
+A thin wrapper around `react-native-paper`'s `BottomNavigation` that keeps the Android system navigation bar icons readable: when the optional `expo-navigation-bar` peer is installed, the icon style automatically follows the theme's darkness (edge-to-edge safe — no background color calls). Pass `onNavBarChange` to the `Provider` to take full control instead; with neither, it silently no-ops.
 
 ```tsx
 import { BottomNavigation } from '@rific/auto-paper'
@@ -340,7 +344,7 @@ createThemeReducer({ color: '#4caf50' })
 ### Redux exports
 
 ```ts
-import { themeReducer, themeActions, selectThemeAppearance, selectThemeColor } from '@rific/auto-paper'
+import { themeReducer, themeActions, selectThemeAppearance, selectThemeBlur, selectThemeColor, selectThemeHarmony } from '@rific/auto-paper'
 import type { ThemeState, ThemeAppearance } from '@rific/auto-paper'
 ```
 
@@ -348,7 +352,9 @@ import type { ThemeState, ThemeAppearance } from '@rific/auto-paper'
 |---|---|
 | `initialize` | `Partial<ThemeState>` |
 | `setAppearance` | `ThemeAppearance` |
+| `setBlur` | `boolean` |
 | `setColor` | `string` |
+| `setHarmony` | `ColorHarmony` |
 
 Selectors accept `ThemeState` directly — compose them with your root state selector:
 

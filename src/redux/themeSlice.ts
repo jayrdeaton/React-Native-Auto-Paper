@@ -1,5 +1,3 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-
 import { ThemeAppearance } from '../useComputedTheme'
 import type { ColorHarmony } from '../utils/getTriadicPalette'
 
@@ -19,30 +17,41 @@ const defaultInitialState: ThemeState = {
   harmony: 'split-complementary'
 }
 
-const reducers = {
-  initialize: (state: ThemeState, action: PayloadAction<Partial<ThemeState>>) => ({ ...state, ...action.payload }),
-  setAppearance: (state: ThemeState, action: PayloadAction<ThemeAppearance>) => ({ ...state, appearance: action.payload }),
-  setBlur: (state: ThemeState, action: PayloadAction<boolean>) => ({ ...state, blur: action.payload }),
-  setColor: (state: ThemeState, action: PayloadAction<string>) => ({ ...state, color: action.payload }),
-  setHarmony: (state: ThemeState, action: PayloadAction<ColorHarmony>) => ({ ...state, harmony: action.payload })
+// Hand-rolled slice — no @reduxjs/toolkit dependency. Action types and creator
+// behavior match the previous createSlice implementation exactly, so this works
+// with RTK stores, vanilla Redux, or any reducer-based state container.
+type PayloadAction<P> = { payload: P; type: string }
+
+const createAction = <P>(type: string) => {
+  const actionCreator = (payload: P): PayloadAction<P> => ({ payload, type })
+  actionCreator.type = type
+  actionCreator.match = (action: { type: string }): action is PayloadAction<P> => action.type === type
+  return actionCreator
+}
+
+const initialize = createAction<Partial<ThemeState>>('theme/initialize')
+const setAppearance = createAction<ThemeAppearance>('theme/setAppearance')
+const setBlur = createAction<boolean>('theme/setBlur')
+const setColor = createAction<string>('theme/setColor')
+const setHarmony = createAction<ColorHarmony>('theme/setHarmony')
+
+export const themeActions = { initialize, setAppearance, setBlur, setColor, setHarmony }
+
+const reduce = (state: ThemeState, action: { type: string }): ThemeState => {
+  if (initialize.match(action)) return { ...state, ...action.payload }
+  if (setAppearance.match(action)) return { ...state, appearance: action.payload }
+  if (setBlur.match(action)) return { ...state, blur: action.payload }
+  if (setColor.match(action)) return { ...state, color: action.payload }
+  if (setHarmony.match(action)) return { ...state, harmony: action.payload }
+  return state
 }
 
 export function createThemeReducer(initialState?: Partial<ThemeState>) {
-  return createSlice({
-    name: 'theme',
-    initialState: { ...defaultInitialState, ...initialState },
-    reducers
-  }).reducer
+  const initial = { ...defaultInitialState, ...initialState }
+  return (state: ThemeState = initial, action: { type: string }): ThemeState => reduce(state, action)
 }
 
-const defaultSlice = createSlice({
-  name: 'theme',
-  initialState: defaultInitialState,
-  reducers
-})
-
-export const themeActions = defaultSlice.actions
-export const themeReducer = defaultSlice.reducer
+export const themeReducer = (state: ThemeState = defaultInitialState, action: { type: string }): ThemeState => reduce(state, action)
 
 export const selectThemeAppearance = (state: ThemeState) => state.appearance
 export const selectThemeBlur = (state: ThemeState) => state.blur
