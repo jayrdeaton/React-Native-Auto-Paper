@@ -31,6 +31,7 @@
   "type": "commonjs",
   "exports": {
     ".": {
+      "react-native": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
@@ -40,7 +41,10 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "!src/__tests__",
+    "!src/__mocks__"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
@@ -90,8 +94,9 @@
   },
   "peerDependencies": {
     "expo-blur": ">=14.0.0",
+    "expo-navigation-bar": ">=56.0.0",
     "react": ">=18.0.0",
-    "react-native": ">=0.73.0",
+    "react-native": ">=0.76.0",
     "react-native-paper": ">=5.0.0"
   },
   "optionalDependencies": {
@@ -99,5 +104,13 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependenciesMeta": {
+    "expo-blur": {
+      "optional": true
+    },
+    "expo-navigation-bar": {
+      "optional": true
+    }
   }
 }
