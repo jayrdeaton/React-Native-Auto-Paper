@@ -31,14 +31,14 @@
   "type": "commonjs",
   "exports": {
     ".": {
-      "react-native": "./dist/index.js",
+      "react-native": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "require": "./dist/index.js"
     }
   },
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -99,12 +99,6 @@
     "react-native": ">=0.76.0",
     "react-native-paper": ">=5.0.0"
   },
-  "optionalDependencies": {
-    "@reduxjs/toolkit": "^2.0.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "peerDependenciesMeta": {
     "expo-blur": {
       "optional": true
@@ -112,5 +106,11 @@
     "expo-navigation-bar": {
       "optional": true
     }
+  },
+  "optionalDependencies": {
+    "@reduxjs/toolkit": "^2.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
