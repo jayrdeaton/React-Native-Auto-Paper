@@ -26,7 +26,7 @@ function DialogComponent({ blur: blurProp, visible, onDismiss, children, style, 
 
   if (!blur) {
     return (
-      <PaperDialog visible={visible} onDismiss={onDismiss} style={style} {...rest}>
+      <PaperDialog visible={visible} onDismiss={onDismiss} style={[styles.sized, style]} {...rest}>
         {children}
       </PaperDialog>
     )
@@ -56,6 +56,8 @@ DialogComponent.ScrollArea = PaperDialog.ScrollArea as React.FC<DialogScrollArea
 export const Dialog = DialogComponent
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden' },
+  // Width cap keeps dialogs card-sized on wide viewports (web/tablet); no effect on phones.
+  card: { alignSelf: 'center', maxWidth: 400, overflow: 'hidden', width: '100%' },
+  sized: { alignSelf: 'center', maxWidth: 400, width: '100%' },
   wrapper: { flex: 1, justifyContent: 'center', paddingHorizontal: 26 }
 })
