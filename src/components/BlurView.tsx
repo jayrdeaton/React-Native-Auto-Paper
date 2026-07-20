@@ -1,14 +1,37 @@
-import type { BlurViewProps as ExpoBlurViewProps } from 'expo-blur'
-import { type ReactNode, useContext } from 'react'
-import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
+import { type ComponentType, type ReactNode, type RefObject, useContext } from 'react'
+import { type StyleProp, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native'
 import { useTheme } from 'react-native-paper'
 
 import { ThemeSettingsContext } from '../ThemeSettingsContext'
 
+// Minimal local shape of expo-blur covering only the member used below — avoids forcing
+// TypeScript to resolve the optional peer's real types for consumers who never installed it.
+interface ExpoBlurModule {
+  BlurView: ComponentType<{
+    children?: ReactNode
+    style?: StyleProp<ViewStyle>
+    tint?: string
+    [key: string]: unknown
+  }>
+}
+
+// Local mirror of expo-blur's public BlurViewProps (node_modules/expo-blur/build/BlurView.types.d.ts)
+// — same reason as ExpoBlurModule above: the peer's real type must never be imported unconditionally.
+type ExpoBlurTint = 'light' | 'dark' | 'default' | 'extraLight' | 'regular' | 'prominent' | 'systemUltraThinMaterial' | 'systemThinMaterial' | 'systemMaterial' | 'systemThickMaterial' | 'systemChromeMaterial' | 'systemUltraThinMaterialLight' | 'systemThinMaterialLight' | 'systemMaterialLight' | 'systemThickMaterialLight' | 'systemChromeMaterialLight' | 'systemUltraThinMaterialDark' | 'systemThinMaterialDark' | 'systemMaterialDark' | 'systemThickMaterialDark' | 'systemChromeMaterialDark'
+type ExpoBlurMethod = 'none' | 'dimezisBlurView' | 'dimezisBlurViewSdk31Plus'
+type ExpoBlurViewProps = {
+  blurMethod?: ExpoBlurMethod
+  blurReductionFactor?: number
+  blurTarget?: RefObject<View | null>
+  experimentalBlurMethod?: ExpoBlurMethod
+  intensity?: number
+  tint?: ExpoBlurTint
+} & ViewProps
+
 // expo-blur is an optional peer — when absent, BlurView renders its solid (non-blur) fallback
 const ExpoBlurView = (() => {
   try {
-    return (require('expo-blur') as typeof import('expo-blur')).BlurView
+    return (require('expo-blur') as ExpoBlurModule).BlurView
   } catch {
     return null
   }

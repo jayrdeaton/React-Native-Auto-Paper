@@ -1,6 +1,15 @@
+// Minimal local shape of expo-navigation-bar covering only the members used below —
+// avoids forcing TypeScript to resolve the optional peer's real types for consumers
+// who never installed it.
+interface ExpoNavigationBarModule {
+  NavigationBar: {
+    setStyle: (style: 'light' | 'dark') => void
+  }
+}
+
 export const navigationBar = (() => {
   try {
-    return require('expo-navigation-bar') as typeof import('expo-navigation-bar')
+    return require('expo-navigation-bar') as ExpoNavigationBarModule
   } catch {
     return null
   }
