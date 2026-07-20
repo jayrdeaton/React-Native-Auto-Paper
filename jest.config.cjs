@@ -5,8 +5,7 @@ module.exports = {
   roots: ['<rootDir>/src'],
   moduleNameMapper: {
     '^react-native$': '<rootDir>/src/__mocks__/react-native.ts',
-    '^react-native-paper$': '<rootDir>/src/__mocks__/react-native-paper.ts',
-    '^expo-splash-screen$': '<rootDir>/src/__mocks__/expo-splash-screen.ts'
+    '^react-native-paper$': '<rootDir>/src/__mocks__/react-native-paper.ts'
   },
   transform: {
     '^.+\\.tsx?$': [
