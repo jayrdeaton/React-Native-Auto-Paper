@@ -8,7 +8,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Optional Redux slice for wiring appearance and color into your store
-- Wrapper components (`Appbar`, `BottomNavigation`, `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`) with prop defaults via context
+- Wrapper components (`Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
 
 ## Installation
@@ -111,7 +111,7 @@ import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
 </AutoPaperProvider>
 ```
 
-Available wrapper components: `Appbar`, `BottomNavigation`, `Button`, `Chip`, `FAB`, `IconButton`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
+Available wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
 
 ### With Redux
 
@@ -365,7 +365,7 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getBlendedColor, isDarkColor, getRgb, getHex } from '@rific/auto-paper'
+import { getTriadicPalette, getBlendedColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
 import type { ColorHarmony } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
