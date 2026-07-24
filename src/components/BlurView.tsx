@@ -67,7 +67,7 @@ export const BlurView = ({ blur = true, children, elevation, style, tintColor, t
       </ExpoBlurView>
     )
   return (
-    <View style={[{ backgroundColor: surfaceColor }, style]}>
+    <View {...props} style={[{ backgroundColor: surfaceColor }, style]}>
       {tint}
       {children}
     </View>

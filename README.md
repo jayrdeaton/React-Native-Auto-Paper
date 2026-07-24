@@ -8,7 +8,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Optional Redux slice for wiring appearance and color into your store
-- Wrapper components (`Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`) with prop defaults via context
+- Wrapper components (`Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
 
 ## Installation
@@ -111,7 +111,7 @@ import { Button, Chip, Provider as AutoPaperProvider } from '@rific/auto-paper'
 </AutoPaperProvider>
 ```
 
-Available wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
+Available wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`. Each is a thin wrapper around the matching `react-native-paper` component and accepts the same props.
 
 ### With Redux
 
@@ -308,6 +308,28 @@ import { IconButton } from '@rific/auto-paper'
 | ...all `IconButtonProps` | | All props from `react-native-paper`'s `IconButton` are supported — explicit `containerColor` or `iconColor` override the variant |
 
 `IconButtonProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `IconButtonProps` with the `variant` field. Use `PaperIconButtonProps` if you need the base paper type.
+
+### `PalettePicker`
+
+Like `ColorPicker`, but each swatch — and the trigger itself — renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking.
+
+```tsx
+import { PalettePicker, useThemeSettings } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  const { settings: { color, harmony }, set } = useThemeSettings()
+  return <PalettePicker value={color} harmony={harmony} onChange={(c) => set({ color: c })} />
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `value` | `string` | Currently selected seed color |
+| `onChange` | `(color: string) => void` | Called with the seed color when a swatch is tapped |
+| `harmony` | `ColorHarmony` | Harmony used to compute each swatch's preview palette. Defaults to `'split-complementary'` |
+| `weights` | `PaletteWeights` | Relative size of each wedge — `{ primary, secondary, tertiary }`. Defaults to `{ primary: 2, secondary: 1, tertiary: 1 }` (primary half the pie, secondary/tertiary a quarter each). Values are normalized, so any positive ratio works; keep each share at or under half the total so its wedge stays a single slice |
+| `colors` | `SeedColor[]` | Seed color swatches to offer. Defaults to the same set as `ColorPicker` |
+| `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
 
 ### `PaperDefaults` / `usePaperDefaults`
 

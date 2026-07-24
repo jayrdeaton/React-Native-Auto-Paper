@@ -54,6 +54,7 @@ src/
     HarmonyPicker.tsx       — picker for the six ColorHarmony modes
     IconButton.tsx          — adds `variant` prop for theme-derived container/icon colors
     Menu.tsx                — wraps Paper Menu with blur-aware surface
+    PalettePicker.tsx       — like ColorPicker, but each swatch (and the trigger) renders a 3-wedge pie previewing the full triadic palette instead of a flat swatch
     TextInput.tsx           — thin wrapper applying PaperDefaults
   utils/
     colorNames.ts           — CSS named color → hex map
@@ -75,7 +76,7 @@ src/
 - `useThemeSettings()` — read/update the current `ThemeSettings` from inside `Provider`
 - `usePaperDefaults()` — read component prop defaults from context
 - `useBlur(override?)` — resolve the effective blur setting
-- Wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`
+- Wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`
 - `themeReducer` / `themeActions` / `createThemeReducer` / selectors / `ThemeState` — optional Redux integration
 - Color utils: `getTriadicPalette`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `isDarkColor`, `getRgb`, `getHex`
 

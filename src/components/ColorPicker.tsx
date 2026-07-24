@@ -3,7 +3,10 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { Icon, TouchableRipple } from 'react-native-paper'
 
 import { useBlur } from '../BlurContext'
+import { SWATCH_GRID_GAP, useSwatchSize } from '../useSwatchGrid'
 import { Dialog } from './Dialog'
+
+const SIZE = 48
 
 export type SeedColor = { label: string; value: string }
 
@@ -17,6 +20,7 @@ export const defaultColors: SeedColor[] = [
   { label: 'Emerald', value: '#4caf50' },
   { label: 'Teal', value: '#009688' },
   { label: 'Cyan', value: '#00bcd4' },
+  { label: 'Sky', value: '#03a9f4' },
   { label: 'Blue', value: '#2196f3' },
   { label: 'Indigo', value: '#3f51b5' },
   { label: 'Deep Purple', value: '#673ab7' },
@@ -25,6 +29,7 @@ export const defaultColors: SeedColor[] = [
   { label: 'Pink', value: '#ec407a' },
   { label: 'Rose', value: '#e91e63' },
   { label: 'Brown', value: '#795548' },
+  { label: 'Taupe', value: '#8d7b68' },
   { label: 'Blue Grey', value: '#607d8b' }
 ]
 
@@ -38,6 +43,7 @@ type Props = {
 export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blurProp }: Props) => {
   const blur = useBlur(blurProp)
   const [open, setOpen] = useState(false)
+  const { onLayout, size } = useSwatchSize(SIZE)
 
   return (
     <>
@@ -47,7 +53,7 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
 
       <Dialog blur={blur} visible={open} onDismiss={() => setOpen(false)}>
         <Dialog.Content>
-          <View style={styles.swatches}>
+          <View style={styles.swatches} onLayout={onLayout}>
             {colors.map(({ value: hex }) => (
               <TouchableOpacity
                 key={hex}
@@ -55,7 +61,7 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
                   onChange(hex)
                   setOpen(false)
                 }}
-                style={[styles.swatch, { backgroundColor: hex }, value === hex && styles.selected]}
+                style={[styles.swatch, { backgroundColor: hex, borderRadius: size / 2, height: size, width: size }, value === hex && styles.selected]}
               >
                 {value === hex && <Icon source='check' size={20} color='white' />}
               </TouchableOpacity>
@@ -69,7 +75,7 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
 
 const styles = StyleSheet.create({
   selected: { borderColor: 'white', borderWidth: 3 },
-  swatch: { alignItems: 'center', borderRadius: 24, height: 48, justifyContent: 'center', width: 48 },
-  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingTop: 12 },
-  trigger: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: 24, height: 48, justifyContent: 'center', width: 48 }
+  swatch: { alignItems: 'center', justifyContent: 'center' },
+  swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: SWATCH_GRID_GAP, paddingTop: 12 },
+  trigger: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: SIZE / 2, height: SIZE, justifyContent: 'center', width: SIZE }
 })
