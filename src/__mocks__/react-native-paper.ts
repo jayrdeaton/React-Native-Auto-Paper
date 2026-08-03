@@ -58,7 +58,13 @@ export const MD3DarkTheme = makeTheme(true)
 
 export const Chip = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
 
+export const Icon = jest.fn(() => null)
+
 export const IconButton = jest.fn(() => null)
+
+export const SegmentedButtons = jest.fn(() => null)
+
+export const TouchableRipple = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
 
 export const Provider = ({ children }: { children?: React.ReactNode }) => children ?? null
 

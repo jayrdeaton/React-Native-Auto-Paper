@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { Icon, TouchableRipple } from 'react-native-paper'
+import { Icon, TouchableRipple, useTheme } from 'react-native-paper'
 
 import { useBlur } from '../BlurContext'
 import { SWATCH_GRID_GAP, useSwatchSize } from '../useSwatchGrid'
+import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
 import type { ColorHarmony, TriadicPalette } from '../utils/getTriadicPalette'
 import { getTriadicPalette } from '../utils/getTriadicPalette'
 import type { SeedColor } from './ColorPicker'
@@ -61,6 +62,7 @@ type Props = {
 
 export const PalettePicker = ({ value, onChange, harmony = 'split-complementary', weights, colors = defaultColors, blur: blurProp }: Props) => {
   const blur = useBlur(blurProp)
+  const { colors: themeColors } = useTheme()
   const [open, setOpen] = useState(false)
   const { onLayout, size } = useSwatchSize(SIZE)
 
@@ -69,8 +71,8 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
       <TouchableRipple onPress={() => setOpen(true)} style={styles.trigger} borderless>
         <View style={styles.triggerContent}>
           <Pie palette={getTriadicPalette(value, harmony)} weights={weights} />
-          <View pointerEvents='none' style={styles.triggerIcon}>
-            <Icon source='palette' size={20} color='white' />
+          <View pointerEvents='none' style={[styles.triggerIcon, { borderRadius: SIZE / 2 }, getSwatchRing(value, false, themeColors.outlineVariant)]}>
+            <Icon source='palette' size={20} color={getContrastColor(value)} />
           </View>
         </View>
       </TouchableRipple>
@@ -88,11 +90,9 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
                 style={[styles.swatch, { height: size, width: size }]}
               >
                 <Pie palette={getTriadicPalette(hex, harmony)} weights={weights} size={size} />
-                {value === hex && (
-                  <View pointerEvents='none' style={[styles.selectedRing, { borderRadius: size / 2 }]}>
-                    <Icon source='check' size={20} color='white' />
-                  </View>
-                )}
+                <View pointerEvents='none' style={[styles.ring, { borderRadius: size / 2 }, getSwatchRing(hex, value === hex, themeColors.outlineVariant)]}>
+                  {value === hex && <Icon source='check' size={20} color={getContrastColor(hex)} />}
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   innerRotator: { height: '100%', left: '-100%', overflow: 'hidden', position: 'absolute', top: 0, width: '200%' },
   pie: { overflow: 'hidden' },
   rotator: { height: '100%', left: 0, overflow: 'hidden', position: 'absolute', top: 0, width: '100%' },
-  selectedRing: { alignItems: 'center', borderColor: 'white', borderWidth: 3, bottom: 0, justifyContent: 'center', left: 0, position: 'absolute', right: 0, top: 0 },
+  ring: { alignItems: 'center', bottom: 0, justifyContent: 'center', left: 0, position: 'absolute', right: 0, top: 0 },
   swatch: { alignItems: 'center', justifyContent: 'center' },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: SWATCH_GRID_GAP, paddingTop: 12 },
   trigger: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: SIZE / 2, height: SIZE, justifyContent: 'center', width: SIZE },
