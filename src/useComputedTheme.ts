@@ -3,46 +3,112 @@ import { Appearance } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, MD3Theme } from 'react-native-paper'
 
 import { getBlendedColor } from './utils/getBlendedColor'
-import { getTonalColor } from './utils/getTonalColor'
+import { getColorRoles } from './utils/getColorRoles'
 import { type ColorHarmony, getTriadicPalette } from './utils/getTriadicPalette'
-import { isDarkColor } from './utils/isDarkColor'
 
 export type ThemeAppearance = 'system' | 'light' | 'dark'
 
-export function useComputedTheme(appearance: ThemeAppearance, color: string, harmony: ColorHarmony = 'split-complementary'): MD3Theme | null {
-  const [theme, setTheme] = useState<MD3Theme | null>(null)
+// Fixed hue/saturation, like MD3's own `error` role (see LightTheme.tsx/DarkTheme.tsx — error is a
+// static Material palette constant, never derived from the seed color either). A "warning" amber
+// shouldn't drift toward the app's accent hue any more than the built-in danger red does; only
+// lightness adapts per light/dark mode below, via getColorRoles. #A15C00 (not the more obvious
+// goldenrod #B8860B) was picked because its onWarning text fails WCAG AA (3.05:1) against the base
+// color itself — see getColorRoles.test.ts's "onColor" caveat: the onColor heuristic (isDarkColor-
+// based binary lightness pick) isn't a verified guarantee like onContainer is, so the base hex
+// itself has to be chosen to land safely, not assumed to.
+//
+// `danger` is deliberately a separate namespace from MD3's own `error` (below, untouched) rather
+// than a fourth tier folded into it — react-native-paper's own components (TextInput's error state,
+// HelperText, Badge) read theme.colors.error/onError directly, so a consumer that wants a
+// getColorRoles-derived "high severity" color without changing what those components render needs
+// its own name. #B00020 already clears WCAG AA for both onDanger-vs-danger (6.16:1) and
+// dangerContainer/onDangerContainer (12–17:1 across modes) — verified the same way as warning's
+// base above.
+export const SEMANTIC_BASE_COLORS = {
+  success: '#2E7D32',
+  warning: '#A15C00',
+  danger: '#B00020'
+}
+
+export type SemanticColorRoles = {
+  success: string
+  onSuccess: string
+  successContainer: string
+  onSuccessContainer: string
+  warning: string
+  onWarning: string
+  warningContainer: string
+  onWarningContainer: string
+  danger: string
+  onDanger: string
+  dangerContainer: string
+  onDangerContainer: string
+}
+
+// MD3Theme's `colors` is a closed `type` (not an `interface`), so it can't be widened via
+// TypeScript's declare-module augmentation — this is the extension point instead, meant to be used
+// with react-native-paper's own `useTheme<T>()` generic (see useTheme.ts's useAutoPaperTheme).
+export type AutoPaperTheme = Omit<MD3Theme, 'colors'> & { colors: MD3Theme['colors'] & SemanticColorRoles }
+
+export function useComputedTheme(appearance: ThemeAppearance, color: string, harmony: ColorHarmony = 'split-complementary'): AutoPaperTheme | null {
+  const [theme, setTheme] = useState<AutoPaperTheme | null>(null)
 
   const computeTheme = useCallback(() => {
     let resolved: string | null | undefined = appearance
     if (resolved === 'system') resolved = Appearance.getColorScheme()
     if (resolved === 'no-preference' || !resolved) resolved = 'light'
     const base = resolved === 'dark' ? MD3DarkTheme : MD3LightTheme
+    const surface = base.colors.surface
 
-    const _theme: MD3Theme = {
+    // error/onError/errorContainer/onErrorContainer are deliberately left untouched below (not run
+    // through getColorRoles like success/warning/primary/secondary/tertiary are) — they're a fixed,
+    // Google-verified Material palette that react-native-paper's own components (TextInput's error
+    // state, HelperText, Badge) read directly, so re-deriving them would change form-validation
+    // colors across every consuming app and risk diverging from a contrast guarantee that's already
+    // correct as shipped.
+    const successRoles = getColorRoles(SEMANTIC_BASE_COLORS.success, surface)
+    const warningRoles = getColorRoles(SEMANTIC_BASE_COLORS.warning, surface)
+    const dangerRoles = getColorRoles(SEMANTIC_BASE_COLORS.danger, surface)
+
+    const _theme: AutoPaperTheme = {
       ...base,
       colors: {
         ...base.colors,
-        elevation: { ...base.colors.elevation }
+        elevation: { ...base.colors.elevation },
+        success: successRoles.color,
+        onSuccess: successRoles.onColor,
+        successContainer: successRoles.container,
+        onSuccessContainer: successRoles.onContainer,
+        warning: warningRoles.color,
+        onWarning: warningRoles.onColor,
+        warningContainer: warningRoles.container,
+        onWarningContainer: warningRoles.onContainer,
+        danger: dangerRoles.color,
+        onDanger: dangerRoles.onColor,
+        dangerContainer: dangerRoles.container,
+        onDangerContainer: dangerRoles.onContainer
       }
     }
 
     const palette = getTriadicPalette(color, harmony)
-    const surface = base.colors.surface
 
-    _theme.colors.primary = palette.primary
-    _theme.colors.onPrimary = getTonalColor(palette.primary, isDarkColor(palette.primary) ? 0.95 : 0.08)
-    _theme.colors.primaryContainer = getBlendedColor(palette.primary, surface, 0.15)
-    _theme.colors.onPrimaryContainer = getTonalColor(palette.primary, isDarkColor(_theme.colors.primaryContainer) ? 0.92 : 0.12)
+    const primaryRoles = getColorRoles(palette.primary, surface)
+    _theme.colors.primary = primaryRoles.color
+    _theme.colors.onPrimary = primaryRoles.onColor
+    _theme.colors.primaryContainer = primaryRoles.container
+    _theme.colors.onPrimaryContainer = primaryRoles.onContainer
 
-    _theme.colors.secondary = palette.secondary
-    _theme.colors.onSecondary = getTonalColor(palette.secondary, isDarkColor(palette.secondary) ? 0.95 : 0.08)
-    _theme.colors.secondaryContainer = getBlendedColor(palette.secondary, surface, 0.15)
-    _theme.colors.onSecondaryContainer = getTonalColor(palette.secondary, isDarkColor(_theme.colors.secondaryContainer) ? 0.92 : 0.12)
+    const secondaryRoles = getColorRoles(palette.secondary, surface)
+    _theme.colors.secondary = secondaryRoles.color
+    _theme.colors.onSecondary = secondaryRoles.onColor
+    _theme.colors.secondaryContainer = secondaryRoles.container
+    _theme.colors.onSecondaryContainer = secondaryRoles.onContainer
 
-    _theme.colors.tertiary = palette.tertiary
-    _theme.colors.onTertiary = getTonalColor(palette.tertiary, isDarkColor(palette.tertiary) ? 0.95 : 0.08)
-    _theme.colors.tertiaryContainer = getBlendedColor(palette.tertiary, surface, 0.15)
-    _theme.colors.onTertiaryContainer = getTonalColor(palette.tertiary, isDarkColor(_theme.colors.tertiaryContainer) ? 0.92 : 0.12)
+    const tertiaryRoles = getColorRoles(palette.tertiary, surface)
+    _theme.colors.tertiary = tertiaryRoles.color
+    _theme.colors.onTertiary = tertiaryRoles.onColor
+    _theme.colors.tertiaryContainer = tertiaryRoles.container
+    _theme.colors.onTertiaryContainer = tertiaryRoles.onContainer
 
     const blended = getBlendedColor(color, palette.secondary, 0.5)
     const tintSurface = (alpha: number) => getBlendedColor(blended, surface, alpha)

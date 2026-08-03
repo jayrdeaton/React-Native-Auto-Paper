@@ -18,4 +18,5 @@ const Appearance = {
 const StatusBar = stub
 
 export { Appearance, StatusBar, StyleSheet }
-export const View = stub
+export const TouchableOpacity = jest.fn(stub)
+export const View = jest.fn(stub)

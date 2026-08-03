@@ -7,6 +7,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - Color harmony palette from a single seed color (primary → secondary → tertiary) — 6 harmony modes available, defaulting to `split-complementary`
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
+- Fixed `success`/`warning`/`danger` semantic color roles (each with `on*`/`*Container` variants) alongside MD3's built-in `error`
 - Optional Redux slice for wiring appearance and color into your store
 - Wrapper components (`Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
@@ -228,12 +229,59 @@ set({ harmony: 'triadic' })
 
 ### `useComputedTheme(appearance, color, harmony?)`
 
-Returns `MD3Theme | null`. `null` on the first render while the theme computes.
+Returns `AutoPaperTheme | null` — `MD3Theme` plus `success`/`warning`/`danger` color roles (see below). `null` on the first render while the theme computes.
 
 ```ts
 const theme = useComputedTheme('system', '#6750a4')
 const theme = useComputedTheme('system', '#6750a4', 'triadic')
 ```
+
+Alongside the standard MD3 `primary`/`secondary`/`tertiary` roles derived from the seed color, `theme.colors` also carries three fixed semantic roles, each with the usual `color`/`onColor`/`Container`/`onContainer` quadruple (`success`, `onSuccess`, `successContainer`, `onSuccessContainer`, and likewise for `warning` and `danger`):
+
+| Role | Base color |
+|---|---|
+| `success` | `SEMANTIC_BASE_COLORS.success` (`#2E7D32`) |
+| `warning` | `SEMANTIC_BASE_COLORS.warning` (`#A15C00`) |
+| `danger` | `SEMANTIC_BASE_COLORS.danger` (`#B00020`) |
+
+These are fixed brand colors — like MD3's own `error`, which is left untouched — not derived from the seed; only their container blending adapts to light/dark mode. `danger` is deliberately separate from `error`: `react-native-paper` components (`TextInput`'s error state, `HelperText`, `Badge`) read `colors.error`/`colors.onError` directly, so redefining `error` itself would change form-validation colors app-wide.
+
+```ts
+import { SEMANTIC_BASE_COLORS } from '@rific/auto-paper'
+import type { AutoPaperTheme, SemanticColorRoles } from '@rific/auto-paper'
+```
+
+### `useAutoPaperTheme()`
+
+A typed alternative to `react-native-paper`'s own `useTheme()` that returns `AutoPaperTheme` — the same theme, with `colors.success`/`warning`/`danger` (and their `on*`/`*Container` variants) typed in, so you get autocomplete without redeclaring the generic yourself at every call site.
+
+```tsx
+import { useAutoPaperTheme } from '@rific/auto-paper'
+
+const { colors } = useAutoPaperTheme()
+
+<Text style={{ color: colors.warning }}>Check your connection</Text>
+```
+
+### `AppearancePicker`
+
+A thin wrapper around `react-native-paper`'s `SegmentedButtons` for switching between `system`/`light`/`dark` appearance.
+
+```tsx
+import { AppearancePicker, useThemeSettings } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  const { settings: { appearance }, set } = useThemeSettings()
+  return <AppearancePicker value={appearance} onChange={(a) => set({ appearance: a })} />
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `value` | `ThemeAppearance` | Currently selected appearance |
+| `onChange` | `(appearance: ThemeAppearance) => void` | Called when a segment is tapped |
+| `showLabels` | `boolean` | Set `false` for icon-only segments — useful in tight layouts where "System" would truncate. `accessibilityLabel` is always set regardless, so screen readers still announce the full word. Defaults to `true` |
+| `icons` | `AppearanceIcons` | Per-value icon overrides — pass just the ones you want to change (e.g. `{ system: 'theme-light-dark' }`), merged over the defaults (`monitor` / `white-balance-sunny` / `weather-night`) |
 
 ### `Appbar`
 
@@ -387,7 +435,7 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getBlendedColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
+import { getTriadicPalette, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
 import type { ColorHarmony } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
@@ -397,7 +445,9 @@ getTriadicPalette('#6750a4', 'square')
 getTriadicPalette('#6750a4', 'complementary')
 getTriadicPalette('#6750a4', 'double-split')
 
-getBlendedColor('#ff0000', '#0000ff', 0.5)  // → '#800080'
+getBlendedColor('#ff0000', '#0000ff', 0.5)   // → '#800080'
+getColorRoles('#6750a4', '#fffbfe')          // → { color, onColor, container, onContainer } — the MD3 color/onColor/container/onContainer math, generalized (this is what useComputedTheme uses internally for every role)
+getContrastColor('#6750a4')                  // → '#ffffff' — black/white pick for content sitting on a fully saturated fill
 isDarkColor('#6750a4')                       // → true
 getRgb('coral')                              // → { r: 255, g: 127, b: 80 }
 getHex('rgb(255, 0, 0)')                     // → '#ff0000'

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { Icon, TouchableRipple } from 'react-native-paper'
+import { Icon, TouchableRipple, useTheme } from 'react-native-paper'
 
 import { useBlur } from '../BlurContext'
 import { SWATCH_GRID_GAP, useSwatchSize } from '../useSwatchGrid'
+import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
 import { Dialog } from './Dialog'
 
 const SIZE = 48
@@ -42,13 +43,14 @@ type Props = {
 
 export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blurProp }: Props) => {
   const blur = useBlur(blurProp)
+  const { colors: themeColors } = useTheme()
   const [open, setOpen] = useState(false)
   const { onLayout, size } = useSwatchSize(SIZE)
 
   return (
     <>
-      <TouchableRipple onPress={() => setOpen(true)} style={[styles.trigger, { backgroundColor: value }]} borderless>
-        <Icon source='palette' size={20} color='white' />
+      <TouchableRipple onPress={() => setOpen(true)} style={[styles.trigger, { backgroundColor: value }, getSwatchRing(value, false, themeColors.outlineVariant)]} borderless>
+        <Icon source='palette' size={20} color={getContrastColor(value)} />
       </TouchableRipple>
 
       <Dialog blur={blur} visible={open} onDismiss={() => setOpen(false)}>
@@ -61,9 +63,9 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
                   onChange(hex)
                   setOpen(false)
                 }}
-                style={[styles.swatch, { backgroundColor: hex, borderRadius: size / 2, height: size, width: size }, value === hex && styles.selected]}
+                style={[styles.swatch, { backgroundColor: hex, borderRadius: size / 2, height: size, width: size }, getSwatchRing(hex, value === hex, themeColors.outlineVariant)]}
               >
-                {value === hex && <Icon source='check' size={20} color='white' />}
+                {value === hex && <Icon source='check' size={20} color={getContrastColor(hex)} />}
               </TouchableOpacity>
             ))}
           </View>
@@ -74,7 +76,6 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
 }
 
 const styles = StyleSheet.create({
-  selected: { borderColor: 'white', borderWidth: 3 },
   swatch: { alignItems: 'center', justifyContent: 'center' },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: SWATCH_GRID_GAP, paddingTop: 12 },
   trigger: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: SIZE / 2, height: SIZE, justifyContent: 'center', width: SIZE }
