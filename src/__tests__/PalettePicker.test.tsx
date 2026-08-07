@@ -31,8 +31,8 @@ const openDialog = () => {
   act(() => onPress?.())
 }
 
-// Only the trigger's and each swatch's ring View sets pointerEvents='none' — the Pie wedges never
-// do — so this reliably isolates them from the many other Views Pie renders per swatch.
+// Only the trigger's and each swatch's ring View sets pointerEvents='none' (the Pie wedges never
+// do), so this reliably isolates them from the many other Views Pie renders per swatch.
 const ringViewStyles = () => mockView.mock.calls.filter(([props]) => (props as { pointerEvents?: string }).pointerEvents === 'none').map(([props]) => (props as { style: object[] }).style)
 
 describe('PalettePicker', () => {
@@ -55,7 +55,7 @@ describe('PalettePicker', () => {
     openDialog()
 
     // The trigger's own ring View was already mounted before the click, so the state update that
-    // opens the dialog re-renders (not mounts) it a second time — two entries — before the 20
+    // opens the dialog re-renders (not mounts) it a second time (two entries) before the 20
     // swatch rings, which mount for the first time in that same pass.
     const [, , ...swatchRings] = ringViewStyles()
     expect(swatchRings).toHaveLength(defaultColors.length)

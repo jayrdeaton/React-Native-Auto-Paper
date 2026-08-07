@@ -19,9 +19,9 @@ const defaultWeights: PaletteWeights = { primary: 2, secondary: 1, tertiary: 1 }
 
 // Each wedge = a static right-half mask, doubly rotated: an outer spin positions the slice's
 // leading edge around the circle, then an inner spin (its own share, minus 180deg) carves the
-// trailing edge — together covering exactly `share` of weights' total, for any share <= 50%.
+// trailing edge, together covering exactly `share` of weights' total, for any share <= 50%.
 // Both rotators are sized to exactly overlap the full circle so React Native's default
-// (own-center) rotation pivot is already correct — transformOrigin is intentionally avoided
+// (own-center) rotation pivot is already correct; transformOrigin is intentionally avoided
 // since it isn't reliably honored across RN renderers. Primary is centered at 12 o'clock,
 // tertiary fills clockwise from there (bottom-right), secondary fills the remainder (bottom-left).
 const buildWedges = (weights: PaletteWeights) => {

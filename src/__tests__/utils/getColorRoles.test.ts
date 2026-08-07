@@ -39,7 +39,7 @@ describe('getColorRoles', () => {
 
   // onColor's target lightness is picked from `color`'s own darkness alone (a cheap binary
   // choice, same as useComputedTheme's pre-existing primary/secondary/tertiary math this was
-  // extracted from) — unlike onContainer, it isn't verified against the actual rebuilt result, so
+  // extracted from); unlike onContainer, it isn't verified against the actual rebuilt result, so
   // it isn't guaranteed AA-safe for every input hue. This only checks it moves in the right
   // direction, not a specific ratio.
   it.each(Object.entries(BASE_COLORS))('picks a lighter onColor for darker colors and vice versa', (_name, base) => {

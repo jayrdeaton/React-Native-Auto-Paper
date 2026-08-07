@@ -1,12 +1,12 @@
 import { ThemeAppearance } from '../useComputedTheme'
-import type { ColorHarmony } from '../utils/getTriadicPalette'
+import type { ColorHarmony, TriadicPalette } from '../utils/getTriadicPalette'
 
 export type { ThemeAppearance }
 
 export type ThemeState = {
   appearance: ThemeAppearance
   blur: boolean
-  color: string
+  color: string | TriadicPalette
   harmony: ColorHarmony
 }
 
@@ -17,7 +17,7 @@ const defaultInitialState: ThemeState = {
   harmony: 'split-complementary'
 }
 
-// Hand-rolled slice — no @reduxjs/toolkit dependency. Action types and creator
+// Hand-rolled slice (no @reduxjs/toolkit dependency). Action types and creator
 // behavior match the previous createSlice implementation exactly, so this works
 // with RTK stores, vanilla Redux, or any reducer-based state container.
 type PayloadAction<P> = { payload: P; type: string }
@@ -32,7 +32,7 @@ const createAction = <P>(type: string) => {
 const initialize = createAction<Partial<ThemeState>>('theme/initialize')
 const setAppearance = createAction<ThemeAppearance>('theme/setAppearance')
 const setBlur = createAction<boolean>('theme/setBlur')
-const setColor = createAction<string>('theme/setColor')
+const setColor = createAction<string | TriadicPalette>('theme/setColor')
 const setHarmony = createAction<ColorHarmony>('theme/setHarmony')
 
 export const themeActions = { initialize, setAppearance, setBlur, setColor, setHarmony }

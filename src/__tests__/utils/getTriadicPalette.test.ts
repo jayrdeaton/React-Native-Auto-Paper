@@ -142,13 +142,13 @@ describe('getTriadicPalette', () => {
     })
 
     it('harmonies that share a secondary offset are distinguished by their tertiary', () => {
-      // analogous and double-split both use +30° for secondary (intentional — tertiary differs)
+      // analogous and double-split both use +30° for secondary (intentional: tertiary differs)
       const analogous = getTriadicPalette('#6750a4', 'analogous')
       const doubleSplit = getTriadicPalette('#6750a4', 'double-split')
       expect(analogous.secondary).toBe(doubleSplit.secondary)
       expect(analogous.tertiary).not.toBe(doubleSplit.tertiary)
 
-      // square and complementary both use +90° for secondary (intentional — tertiary differs)
+      // square and complementary both use +90° for secondary (intentional: tertiary differs)
       const square = getTriadicPalette('#6750a4', 'square')
       const complementary = getTriadicPalette('#6750a4', 'complementary')
       expect(square.secondary).toBe(complementary.secondary)
