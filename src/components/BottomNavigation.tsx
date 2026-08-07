@@ -2,20 +2,20 @@ import React, { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { BottomNavigation as PaperBottomNavigation, type BottomNavigationProps, type BottomNavigationRoute, useTheme } from 'react-native-paper'
 
-import { navigationBar, setNavigationBarStyle } from '../navigation-bar'
+import { setNavigationBarStyle } from '../navigation-bar'
 import { usePaperDefaults } from '../PaperDefaultsContext'
 import { useNavBarContext } from '../ThemeProvider'
 
 function useNavigationBarSync() {
   const theme = useTheme()
-  const { onNavBarChange } = useNavBarContext()
+  const { navigationBar, onNavBarChange } = useNavBarContext()
   useEffect(() => {
     if (Platform.OS !== 'android') return
     // An explicit onNavBarChange callback takes full control; otherwise sync the
-    // nav bar icon style automatically when expo-navigation-bar is installed.
+    // nav bar icon style automatically when expo-navigation-bar was injected via <Provider>.
     if (onNavBarChange) onNavBarChange(theme.colors.surface, theme.dark)
-    else if (navigationBar) setNavigationBarStyle(theme.dark)
-  }, [theme, onNavBarChange])
+    else if (navigationBar) setNavigationBarStyle(navigationBar, theme.dark)
+  }, [theme, onNavBarChange, navigationBar])
 }
 
 function BottomNavigationComponent<Route extends BottomNavigationRoute>(props: BottomNavigationProps<Route>) {

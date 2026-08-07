@@ -6,7 +6,7 @@ import { ColorPicker, defaultColors } from '../components/ColorPicker'
 import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
 
 // The real Dialog pulls in Animated/BackHandler/Portal/safe-area-context, none of which this
-// suite needs — ColorPicker's own logic (what it hands to getSwatchRing/getContrastColor) is
+// suite needs: ColorPicker's own logic (what it hands to getSwatchRing/getContrastColor) is
 // independent of how Dialog animates or positions itself, so a minimal stand-in that just gates
 // `children` on `visible` is enough to exercise the swatch list.
 jest.mock('../components/Dialog', () => {
@@ -71,7 +71,7 @@ describe('ColorPicker', () => {
     expect(checkCalls[0][0].color).toBe(getContrastColor(selected))
   })
 
-  it('never leaves a swatch edgeless — every ring has a positive borderWidth', () => {
+  it('never leaves a swatch edgeless: every ring has a positive borderWidth', () => {
     render(<ColorPicker value={defaultColors[0].value} onChange={jest.fn()} />)
     openDialog()
 

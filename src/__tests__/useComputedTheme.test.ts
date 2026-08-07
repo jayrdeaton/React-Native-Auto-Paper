@@ -122,6 +122,49 @@ describe('useComputedTheme', () => {
     })
   })
 
+  describe('explicit triad ({ primary, secondary, tertiary })', () => {
+    const triad = { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' }
+
+    it('assigns each field to its matching role, unaltered by harmony math', () => {
+      const { result } = renderHook(() => useComputedTheme('light', triad))
+      expect(result.current?.colors.primary).toBe('#ff0000')
+      expect(result.current?.colors.secondary).toBe('#00ff00')
+      expect(result.current?.colors.tertiary).toBe('#0000ff')
+    })
+
+    it('ignores the harmony argument in explicit mode', () => {
+      const { result } = renderHook(() => useComputedTheme('light', triad, 'triadic'))
+      expect(result.current?.colors.primary).toBe('#ff0000')
+      expect(result.current?.colors.secondary).toBe('#00ff00')
+      expect(result.current?.colors.tertiary).toBe('#0000ff')
+    })
+
+    it('accepts named colors in each slot', () => {
+      const { result } = renderHook(() => useComputedTheme('light', { primary: 'red', secondary: 'lime', tertiary: 'blue' }))
+      expect(result.current?.colors.primary).toBe('#ff0000')
+      expect(result.current?.colors.secondary).toBe('#00ff00')
+      expect(result.current?.colors.tertiary).toBe('#0000ff')
+    })
+
+    it('throws on an invalid color in any slot', () => {
+      expect(() => renderHook(() => useComputedTheme('light', { primary: 'notacolor', secondary: '#00ff00', tertiary: '#0000ff' }))).toThrow('Invalid color format')
+      expect(() => renderHook(() => useComputedTheme('light', { primary: '#ff0000', secondary: 'notacolor', tertiary: '#0000ff' }))).toThrow('Invalid color format')
+    })
+
+    it('does not recompute when a structurally-identical object literal is passed on rerender', () => {
+      const { result, rerender } = renderHook(({ color }: { color: typeof triad }) => useComputedTheme('light', color), { initialProps: { color: triad } })
+      const before = result.current
+      act(() => { rerender({ color: { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' } }) })
+      expect(result.current).toBe(before)
+    })
+
+    it('recomputes when a field in the triad changes', () => {
+      const { result, rerender } = renderHook(({ color }: { color: typeof triad }) => useComputedTheme('light', color), { initialProps: { color: triad } })
+      act(() => { rerender({ color: { ...triad, secondary: '#ffff00' } }) })
+      expect(result.current?.colors.secondary).toBe('#ffff00')
+    })
+  })
+
   describe('error role', () => {
     it('leaves error/onError/errorContainer/onErrorContainer exactly as stock MD3LightTheme in light mode', () => {
       const { result } = renderHook(() => useComputedTheme('light', '#6750a4'))

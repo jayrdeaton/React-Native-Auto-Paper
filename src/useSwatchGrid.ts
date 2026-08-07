@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { LayoutChangeEvent } from 'react-native'
 
 // Fixed column count so the swatch grid always fills complete rows, regardless of dialog width
-// (phone vs tablet vs web) — sizing the swatches to fit, rather than wrapping fixed-size swatches
+// (phone vs tablet vs web): sizing the swatches to fit, rather than wrapping fixed-size swatches
 // and hoping the total divides evenly into whatever column count the width happens to produce.
 export const SWATCH_GRID_COLUMNS = 5
 export const SWATCH_GRID_GAP = 12

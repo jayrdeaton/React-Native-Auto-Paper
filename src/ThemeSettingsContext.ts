@@ -1,13 +1,13 @@
 import { createContext } from 'react'
 
 import type { ThemeAppearance } from './useComputedTheme'
-import type { ColorHarmony } from './utils/getTriadicPalette'
+import type { ColorHarmony, TriadicPalette } from './utils/getTriadicPalette'
 
 export type ThemeSettings = {
   appearance: ThemeAppearance
   blur: boolean
   blurTint: number
-  color: string
+  color: string | TriadicPalette
   harmony: ColorHarmony
 }
 

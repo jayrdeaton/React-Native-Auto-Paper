@@ -19,6 +19,12 @@ describe('themeSlice', () => {
     expect(state.appearance).toBe(initial.appearance)
   })
 
+  it('setColor accepts an explicit { primary, secondary, tertiary } triad', () => {
+    const triad = { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' }
+    const state = themeReducer(initial, themeActions.setColor(triad))
+    expect(state.color).toEqual(triad)
+  })
+
   it('initialize does a partial merge', () => {
     const state = themeReducer(initial, themeActions.initialize({ color: '#00ff00' }))
     expect(state.color).toBe('#00ff00')

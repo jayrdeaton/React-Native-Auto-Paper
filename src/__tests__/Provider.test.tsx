@@ -12,7 +12,7 @@ function ReadSettings() {
   return (
     <>
       <span data-testid="appearance">{settings.appearance}</span>
-      <span data-testid="color">{settings.color}</span>
+      <span data-testid="color">{typeof settings.color === 'string' ? settings.color : JSON.stringify(settings.color)}</span>
       <span data-testid="harmony">{settings.harmony}</span>
     </>
   )
@@ -63,6 +63,12 @@ describe('Provider', () => {
     const onReady = jest.fn()
     render(<Provider onReady={onReady}><span /></Provider>)
     expect(onReady).toHaveBeenCalledTimes(1)
+  })
+
+  it('accepts an explicit { primary, secondary, tertiary } triad for initialValue.color', () => {
+    const triad = { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' }
+    render(<Provider initialValue={{ color: triad }}><ReadSettings /></Provider>)
+    expect(screen.getByTestId('color').textContent).toBe(JSON.stringify(triad))
   })
 
   it('does not call onChange on initial render', () => {

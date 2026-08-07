@@ -18,7 +18,7 @@ describe('AppearancePicker', () => {
     expect(call.value).toBe('dark')
 
     // AppearancePicker never sets multiSelect, so onValueChange is always the single-value
-    // (value: string) => void overload — cast past the SegmentedButtonsProps union TS can't
+    // (value: string) => void overload, cast past the SegmentedButtonsProps union TS can't
     // narrow from a plain mock call.
     const onValueChange = call.onValueChange as (value: string) => void
     onValueChange('light')

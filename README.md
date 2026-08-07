@@ -1,10 +1,12 @@
 # @rific/auto-paper
 
-Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-native-paper/). Give it one color and an appearance setting — it generates an MD3 palette and handles light/dark/system mode automatically.
+Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-native-paper/). Give it one color and an appearance setting, and it generates an MD3 palette and handles light/dark/system mode automatically.
 
 ## Features
 
-- Color harmony palette from a single seed color (primary → secondary → tertiary) — 6 harmony modes available, defaulting to `split-complementary`
+- Color harmony palette from a single seed color (primary → secondary → tertiary), with 6 harmony modes available, defaulting to `split-complementary`
+- Or supply an explicit `{ primary, secondary, tertiary }` triad directly, bypassing harmony math entirely
+- `getThirdColor(colorA, colorB)` derives a third color maximally distinct in hue from two arbitrary inputs, handy for pairing with the explicit triad above when you have two colors and need a third that won't clash with either
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Fixed `success`/`warning`/`danger` semantic color roles (each with `on*`/`*Container` variants) alongside MD3's built-in `error`
@@ -27,11 +29,13 @@ npm install react-native-paper
 Optional peer dependencies:
 
 ```bash
-npm install expo-blur             # frosted-glass BlurView; without it BlurView renders its solid (non-blur) fallback
+npm install expo-blur             # frosted-glass BlurView
 npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
 ```
 
-The exported Redux slice has no dependency on `@reduxjs/toolkit` — it works with RTK stores, vanilla Redux, or no Redux at all.
+Neither is auto-detected: pass them to `Provider` (`expoBlur`, `navigationBar`, see the prop table below) and `BlurView`/`BottomNavigation` pick them up automatically. Omit either and you get a working fallback instead: `BlurView` renders its solid (non-blur) look, and the Android nav bar simply isn't synced.
+
+The exported Redux slice has no dependency on `@reduxjs/toolkit`: it works with RTK stores, vanilla Redux, or no Redux at all.
 
 ## Usage
 
@@ -49,7 +53,7 @@ export default function App() {
 }
 ```
 
-`Provider` renders `null` on the first render while the theme computes, then wraps your app in `PaperProvider` with the computed theme, a matching `StatusBar`, and a background `View`. Use `onReady` to hook into that moment — e.g. to dismiss a splash screen:
+`Provider` renders `null` on the first render while the theme computes, then wraps your app in `PaperProvider` with the computed theme, a matching `StatusBar`, and a background `View`. Use `onReady` to hook into that moment, e.g. to dismiss a splash screen:
 
 ```tsx
 <AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4' }} onReady={SplashScreen.hideAsync}>
@@ -75,7 +79,7 @@ function SettingsScreen() {
 
 ### Choosing a color harmony
 
-The `harmony` prop controls how secondary and tertiary colors are derived from your seed. The default is `split-complementary`, which works well for most apps — it keeps secondary and tertiary close together in hue so they feel like a family of accents rather than three competing dominant colors.
+The `harmony` prop controls how secondary and tertiary colors are derived from your seed. The default is `split-complementary`, which works well for most apps: it keeps secondary and tertiary close together in hue so they feel like a family of accents rather than three competing dominant colors.
 
 ```tsx
 <AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4', harmony: 'split-complementary' }}>
@@ -83,12 +87,44 @@ The `harmony` prop controls how secondary and tertiary colors are derived from y
 
 | Harmony | Offsets | Character |
 |---|---|---|
-| `split-complementary` *(default)* | 0°, +150°, +210° | Harmonious contrast — flanks the complement by ±30° |
-| `triadic` | 0°, +120°, +240° | Equilateral — maximum variety, three equal-weight colors |
-| `analogous` | 0°, +30°, +60° | Cohesive, natural — neighboring hues |
-| `square` | 0°, +90°, +270° | Balanced, structured — right-angle symmetry |
-| `complementary` | 0°, +90°, +180° | Bold — accent at 90° plus true opposite |
-| `double-split` | 0°, +30°, +330° | Tight — flanks the primary by ±30° |
+| `split-complementary` *(default)* | 0°, +150°, +210° | Harmonious contrast: flanks the complement by ±30° |
+| `triadic` | 0°, +120°, +240° | Equilateral: maximum variety, three equal-weight colors |
+| `analogous` | 0°, +30°, +60° | Cohesive, natural: neighboring hues |
+| `square` | 0°, +90°, +270° | Balanced, structured: right-angle symmetry |
+| `complementary` | 0°, +90°, +180° | Bold: accent at 90° plus true opposite |
+| `double-split` | 0°, +30°, +330° | Tight: flanks the primary by ±30° |
+
+### Explicit triad (bypassing harmony)
+
+Instead of a single seed color, `color` also accepts a `{ primary, secondary, tertiary }` object (`TriadicPalette`). Each field is assigned directly, through `getColorRoles`, with no hue math, and `harmony` is ignored entirely. Useful whenever you already have three colors that matter individually, rather than one seed to expand.
+
+```tsx
+<AutoPaperProvider
+  initialValue={{
+    appearance: 'system',
+    color: { primary: '#e53935', secondary: '#1e88e5', tertiary: '#43a047' }
+  }}
+>
+```
+
+A common case is deriving the third color from two you already have: any two arbitrary colors, from user picks to brand colors to data-driven values.
+
+```tsx
+import { getThirdColor, Provider as AutoPaperProvider } from '@rific/auto-paper'
+
+const colorA = '#e53935'
+const colorB = '#1e88e5'
+
+<AutoPaperProvider
+  initialValue={{
+    color: {
+      primary: colorA,
+      secondary: colorB,
+      tertiary: getThirdColor(colorA, colorB) // → '#59e52a'
+    }
+  }}
+>
+```
 
 ### With component defaults
 
@@ -158,7 +194,7 @@ dispatch(themeActions.setAppearance('dark'))
 
 ### With `useComputedTheme`
 
-Use the hook directly when you need to extend the theme before passing it to `PaperProvider` — for example, to merge in a navigation theme or add custom color keys:
+Use the hook directly when you need to extend the theme before passing it to `PaperProvider`, for example to merge in a navigation theme or add custom color keys:
 
 ```tsx
 import { useComputedTheme } from '@rific/auto-paper'
@@ -194,11 +230,13 @@ export default function App() {
 
 | Prop | Type | Description |
 |---|---|---|
-| `initialValue` | `Partial<ThemeSettings>` | Initial theme settings — `appearance`, `color`, `harmony`, `blur`, `blurTint`. Defaults from `defaultThemeSettings` fill any omitted fields. |
+| `initialValue` | `Partial<ThemeSettings>` | Initial theme settings: `appearance`, `color`, `harmony`, `blur`, `blurTint`. Defaults from `defaultThemeSettings` fill any omitted fields. |
 | `onChange` | `(settings: ThemeSettings) => void` | Called whenever settings change via `useThemeSettings().set()` |
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
-| `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `expo-navigation-bar` icon-style sync |
+| `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. |
+| `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
+| `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
@@ -208,8 +246,8 @@ export default function App() {
 | Field | Type | Default |
 |---|---|---|
 | `appearance` | `'system' \| 'light' \| 'dark'` | `'system'` |
-| `color` | `string` | `'#6750a4'` |
-| `harmony` | `ColorHarmony` | `'split-complementary'` |
+| `color` | `string \| TriadicPalette` | `'#6750a4'` |
+| `harmony` | `ColorHarmony` | `'split-complementary'` (ignored when `color` is a `TriadicPalette`) |
 | `blur` | `boolean` | `true` |
 | `blurTint` | `number` | `0.2` |
 
@@ -229,11 +267,14 @@ set({ harmony: 'triadic' })
 
 ### `useComputedTheme(appearance, color, harmony?)`
 
-Returns `AutoPaperTheme | null` — `MD3Theme` plus `success`/`warning`/`danger` color roles (see below). `null` on the first render while the theme computes.
+Returns `AutoPaperTheme | null`: `MD3Theme` plus `success`/`warning`/`danger` color roles (see below). `null` on the first render while the theme computes.
+
+`color` accepts either a single seed string (expanded into `primary`/`secondary`/`tertiary` via `harmony`) or an explicit `{ primary, secondary, tertiary }` triad (`TriadicPalette`), which assigns each field directly and ignores `harmony`. Either way, the resulting `primary` also drives `outline`/`surfaceVariant`/elevation tinting.
 
 ```ts
 const theme = useComputedTheme('system', '#6750a4')
 const theme = useComputedTheme('system', '#6750a4', 'triadic')
+const theme = useComputedTheme('system', { primary: '#e53935', secondary: '#1e88e5', tertiary: '#43a047' }) // harmony ignored
 ```
 
 Alongside the standard MD3 `primary`/`secondary`/`tertiary` roles derived from the seed color, `theme.colors` also carries three fixed semantic roles, each with the usual `color`/`onColor`/`Container`/`onContainer` quadruple (`success`, `onSuccess`, `successContainer`, `onSuccessContainer`, and likewise for `warning` and `danger`):
@@ -244,7 +285,7 @@ Alongside the standard MD3 `primary`/`secondary`/`tertiary` roles derived from t
 | `warning` | `SEMANTIC_BASE_COLORS.warning` (`#A15C00`) |
 | `danger` | `SEMANTIC_BASE_COLORS.danger` (`#B00020`) |
 
-These are fixed brand colors — like MD3's own `error`, which is left untouched — not derived from the seed; only their container blending adapts to light/dark mode. `danger` is deliberately separate from `error`: `react-native-paper` components (`TextInput`'s error state, `HelperText`, `Badge`) read `colors.error`/`colors.onError` directly, so redefining `error` itself would change form-validation colors app-wide.
+These are fixed brand colors (like MD3's own `error`, which is left untouched), not derived from the seed; only their container blending adapts to light/dark mode. `danger` is deliberately separate from `error`: `react-native-paper` components (`TextInput`'s error state, `HelperText`, `Badge`) read `colors.error`/`colors.onError` directly, so redefining `error` itself would change form-validation colors app-wide.
 
 ```ts
 import { SEMANTIC_BASE_COLORS } from '@rific/auto-paper'
@@ -253,7 +294,7 @@ import type { AutoPaperTheme, SemanticColorRoles } from '@rific/auto-paper'
 
 ### `useAutoPaperTheme()`
 
-A typed alternative to `react-native-paper`'s own `useTheme()` that returns `AutoPaperTheme` — the same theme, with `colors.success`/`warning`/`danger` (and their `on*`/`*Container` variants) typed in, so you get autocomplete without redeclaring the generic yourself at every call site.
+A typed alternative to `react-native-paper`'s own `useTheme()` that returns `AutoPaperTheme`: the same theme, with `colors.success`/`warning`/`danger` (and their `on*`/`*Container` variants) typed in, so you get autocomplete without redeclaring the generic yourself at every call site.
 
 ```tsx
 import { useAutoPaperTheme } from '@rific/auto-paper'
@@ -280,8 +321,8 @@ function SettingsScreen() {
 |---|---|---|
 | `value` | `ThemeAppearance` | Currently selected appearance |
 | `onChange` | `(appearance: ThemeAppearance) => void` | Called when a segment is tapped |
-| `showLabels` | `boolean` | Set `false` for icon-only segments — useful in tight layouts where "System" would truncate. `accessibilityLabel` is always set regardless, so screen readers still announce the full word. Defaults to `true` |
-| `icons` | `AppearanceIcons` | Per-value icon overrides — pass just the ones you want to change (e.g. `{ system: 'theme-light-dark' }`), merged over the defaults (`monitor` / `white-balance-sunny` / `weather-night`) |
+| `showLabels` | `boolean` | Set `false` for icon-only segments, useful in tight layouts where "System" would truncate. `accessibilityLabel` is always set regardless, so screen readers still announce the full word. Defaults to `true` |
+| `icons` | `AppearanceIcons` | Per-value icon overrides: pass just the ones you want to change (e.g. `{ system: 'theme-light-dark' }`), merged over the defaults (`monitor` / `white-balance-sunny` / `weather-night`) |
 
 ### `Appbar`
 
@@ -297,11 +338,11 @@ import { Appbar } from '@rific/auto-paper'
 </Appbar.Header>
 ```
 
-`Appbar.Content`, `Appbar.Action`, and `Appbar.BackAction` are re-exported directly from `react-native-paper`. Only `Appbar.Header` is wrapped — it applies `AppbarHeader` defaults from context and renders the synced `StatusBar`.
+`Appbar.Content`, `Appbar.Action`, and `Appbar.BackAction` are re-exported directly from `react-native-paper`. Only `Appbar.Header` is wrapped: it applies `AppbarHeader` defaults from context and renders the synced `StatusBar`.
 
 ### `BottomNavigation`
 
-A thin wrapper around `react-native-paper`'s `BottomNavigation` that keeps the Android system navigation bar icons readable: when the optional `expo-navigation-bar` peer is installed, the icon style automatically follows the theme's darkness (edge-to-edge safe — no background color calls). Pass `onNavBarChange` to the `Provider` to take full control instead; with neither, it silently no-ops.
+A thin wrapper around `react-native-paper`'s `BottomNavigation` that keeps the Android system navigation bar icons readable: when `navigationBar` is injected into `Provider`, the icon style automatically follows the theme's darkness (edge-to-edge safe, no background color calls). Pass `onNavBarChange` to the `Provider` to take full control instead; with neither, it silently no-ops.
 
 ```tsx
 import { BottomNavigation } from '@rific/auto-paper'
@@ -353,13 +394,13 @@ import { IconButton } from '@rific/auto-paper'
 | Prop | Type | Description |
 |---|---|---|
 | `variant` | `'primary' \| 'secondary' \| 'tertiary' \| 'surface'` | Sets `containerColor` and `iconColor` from the matching theme color pair |
-| ...all `IconButtonProps` | | All props from `react-native-paper`'s `IconButton` are supported — explicit `containerColor` or `iconColor` override the variant |
+| ...all `IconButtonProps` | | All props from `react-native-paper`'s `IconButton` are supported; explicit `containerColor` or `iconColor` override the variant |
 
 `IconButtonProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `IconButtonProps` with the `variant` field. Use `PaperIconButtonProps` if you need the base paper type.
 
 ### `PalettePicker`
 
-Like `ColorPicker`, but each swatch — and the trigger itself — renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking.
+Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking.
 
 ```tsx
 import { PalettePicker, useThemeSettings } from '@rific/auto-paper'
@@ -375,7 +416,7 @@ function SettingsScreen() {
 | `value` | `string` | Currently selected seed color |
 | `onChange` | `(color: string) => void` | Called with the seed color when a swatch is tapped |
 | `harmony` | `ColorHarmony` | Harmony used to compute each swatch's preview palette. Defaults to `'split-complementary'` |
-| `weights` | `PaletteWeights` | Relative size of each wedge — `{ primary, secondary, tertiary }`. Defaults to `{ primary: 2, secondary: 1, tertiary: 1 }` (primary half the pie, secondary/tertiary a quarter each). Values are normalized, so any positive ratio works; keep each share at or under half the total so its wedge stays a single slice |
+| `weights` | `PaletteWeights` | Relative size of each wedge: `{ primary, secondary, tertiary }`. Defaults to `{ primary: 2, secondary: 1, tertiary: 1 }` (primary half the pie, secondary/tertiary a quarter each). Values are normalized, so any positive ratio works; keep each share at or under half the total so its wedge stays a single slice |
 | `colors` | `SeedColor[]` | Seed color swatches to offer. Defaults to the same set as `ColorPicker` |
 | `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
 
@@ -423,10 +464,10 @@ import type { ThemeState, ThemeAppearance } from '@rific/auto-paper'
 | `initialize` | `Partial<ThemeState>` |
 | `setAppearance` | `ThemeAppearance` |
 | `setBlur` | `boolean` |
-| `setColor` | `string` |
+| `setColor` | `string \| TriadicPalette` |
 | `setHarmony` | `ColorHarmony` |
 
-Selectors accept `ThemeState` directly — compose them with your root state selector:
+Selectors accept `ThemeState` directly; compose them with your root state selector:
 
 ```ts
 const appearance = useSelector((state: RootState) => selectThemeAppearance(state.theme))
@@ -435,8 +476,8 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
-import type { ColorHarmony } from '@rific/auto-paper'
+import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
+import type { ColorHarmony, TriadicPalette } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
 getTriadicPalette('#6750a4', 'triadic')               // → { primary, secondary, tertiary }
@@ -445,9 +486,11 @@ getTriadicPalette('#6750a4', 'square')
 getTriadicPalette('#6750a4', 'complementary')
 getTriadicPalette('#6750a4', 'double-split')
 
+getThirdColor('#e53935', '#1e88e5')          // → '#59e52a' (hue maximally distant from both inputs; s/l averaged from both)
+
 getBlendedColor('#ff0000', '#0000ff', 0.5)   // → '#800080'
-getColorRoles('#6750a4', '#fffbfe')          // → { color, onColor, container, onContainer } — the MD3 color/onColor/container/onContainer math, generalized (this is what useComputedTheme uses internally for every role)
-getContrastColor('#6750a4')                  // → '#ffffff' — black/white pick for content sitting on a fully saturated fill
+getColorRoles('#6750a4', '#fffbfe')          // → { color, onColor, container, onContainer }: the MD3 color/onColor/container/onContainer math, generalized (this is what useComputedTheme uses internally for every role)
+getContrastColor('#6750a4')                  // → '#ffffff' (black/white pick for content sitting on a fully saturated fill)
 isDarkColor('#6750a4')                       // → true
 getRgb('coral')                              // → { r: 255, g: 127, b: 80 }
 getHex('rgb(255, 0, 0)')                     // → '#ff0000'

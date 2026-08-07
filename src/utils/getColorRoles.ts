@@ -13,7 +13,7 @@ export type ColorRoles = {
 // useComputedTheme already uses for primary/secondary/tertiary: onColor is tuned to sit on the
 // vivid color itself, container is base blended toward the theme's real surface (so it inherits
 // that surface's actual lightness rather than a fixed light/dark guess), and onContainer is tuned
-// against the *computed* container rather than a light/dark assumption — so it stays readable
+// against the *computed* container rather than a light/dark assumption, so it stays readable
 // whatever surface color it's handed. onContainer also reads safely directly on `surface` itself
 // (not just on `container`), since container is only lightly blended toward it.
 export const getColorRoles = (base: string, surface: string, containerAlpha = 0.15): ColorRoles => {
