@@ -33,7 +33,7 @@ npm install expo-blur             # frosted-glass BlurView
 npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
 ```
 
-Neither is auto-detected: pass them to `Provider` (`expoBlur`, `navigationBar`, see the prop table below) and `BlurView`/`BottomNavigation` pick them up automatically. Omit either and you get a working fallback instead: `BlurView` renders its solid (non-blur) look, and the Android nav bar simply isn't synced.
+These integrations are opt-in: pass them to `Provider` (`expoBlur`, `navigationBar`, and `reanimated` — see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
 
 The exported Redux slice has no dependency on `@reduxjs/toolkit`: it works with RTK stores, vanilla Redux, or no Redux at all.
 
@@ -238,6 +238,7 @@ export default function App() {
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
+| `reanimated` | `ReanimatedModule` | Injects `react-native-reanimated` (for example `import Reanimated from 'react-native-reanimated'`) so `<Dialog animatedStyle={...}>` can animate its card on the UI thread. Omit to keep `animatedStyle` as a no-op. |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
 
@@ -254,6 +255,8 @@ export default function App() {
 ### `useThemeSettings()`
 
 Returns `{ settings: ThemeSettings, set: (patch: Partial<ThemeSettings>) => void }`. Use this hook from any component inside `Provider` to read or update the current theme settings.
+
+`useReanimatedModule()` is also available inside the provider tree when you need to read the injected reanimated module directly; it returns `undefined` unless `Provider` was given a `reanimated` prop.
 
 ```tsx
 import { useThemeSettings } from '@rific/auto-paper'
@@ -376,6 +379,35 @@ import { Chip } from '@rific/auto-paper'
 | ...all `ChipProps` | | All props from `react-native-paper`'s `Chip` are supported |
 
 `ChipProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `ChipProps` with the `variant` field. Use `PaperChipProps` if you need the base paper type.
+
+### `Dialog`
+
+A thin wrapper around `react-native-paper`'s `Dialog` with built-in blur support and optional UI-thread animation hooks. `blur` overrides the ambient blur setting for that dialog, and `animatedStyle` can be used to animate the card wrapper when a reanimated module has been injected into `Provider`.
+
+```tsx
+import { Dialog, Provider } from '@rific/auto-paper'
+import Reanimated, { useAnimatedStyle } from 'react-native-reanimated'
+
+function SettingsDialog({ visible }: { visible: boolean }) {
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: 1 }))
+
+  return (
+    <Provider initialValue={{ appearance: 'system', color: '#6750a4' }} reanimated={Reanimated}>
+      <Dialog visible={visible} onDismiss={() => {}} animatedStyle={animatedStyle} blur>
+        {/* dialog contents */}
+      </Dialog>
+    </Provider>
+  )
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
+| `animatedStyle` | `unknown` | Applied to the card's outer wrapper when a reanimated module has been injected; otherwise ignored |
+| ...all `DialogProps` | | All props from `react-native-paper`'s `Dialog` are supported |
+
+`DialogProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `DialogProps` with the `blur` and `animatedStyle` fields. Use `PaperDialogProps` if you need the base paper type.
 
 ### `IconButton`
 

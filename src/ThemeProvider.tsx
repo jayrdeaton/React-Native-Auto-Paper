@@ -3,6 +3,7 @@ import { StatusBar, type StatusBarProps, type StyleProp, StyleSheet, View, type 
 import { Provider as PaperProvider } from 'react-native-paper'
 
 import type { ExpoBlurModule } from './components/BlurView'
+import type { ReanimatedModule } from './components/Dialog'
 import type { ExpoNavigationBarModule } from './navigation-bar'
 import { type PaperDefaults, PaperDefaultsContext } from './PaperDefaultsContext'
 import { defaultThemeSettings, type ThemeSettings, ThemeSettingsContext } from './ThemeSettingsContext'
@@ -20,6 +21,9 @@ export const useNavBarContext = () => useContext(NavBarContext)
 const BlurModuleContext = createContext<ExpoBlurModule | undefined>(undefined)
 export const useBlurModule = () => useContext(BlurModuleContext)
 
+const ReanimatedModuleContext = createContext<ReanimatedModule | undefined>(undefined)
+export const useReanimatedModule = () => useContext(ReanimatedModuleContext)
+
 export type ProviderProps = {
   children: ReactNode
   defaults?: PaperDefaults
@@ -31,11 +35,13 @@ export type ProviderProps = {
   onChange?: (settings: ThemeSettings) => void
   onNavBarChange?: (color: string, dark: boolean) => void
   onReady?: () => void
+  /** Injects react-native-reanimated so `<Dialog animatedStyle={...}>` (e.g. from `useAnimatedStyle()`) can animate its card on the UI thread. Pass `import Reanimated from 'react-native-reanimated'`; omit to keep Dialog's `animatedStyle` prop a no-op. */
+  reanimated?: ReanimatedModule
   statusBarProps?: StatusBarProps
   style?: StyleProp<ViewStyle>
 }
 
-export function Provider({ children, defaults, expoBlur, initialValue, navigationBar, onChange, onNavBarChange, onReady, statusBarProps, style }: ProviderProps) {
+export function Provider({ children, defaults, expoBlur, initialValue, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
   const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...initialValue }))
 
   const set = useCallback((patch: Partial<ThemeSettings>) => {
@@ -71,7 +77,9 @@ export function Provider({ children, defaults, expoBlur, initialValue, navigatio
         <PaperDefaultsContext.Provider value={defaults ?? {}}>
           <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
             <BlurModuleContext.Provider value={expoBlur}>
-              <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+              <ReanimatedModuleContext.Provider value={reanimated}>
+                <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+              </ReanimatedModuleContext.Provider>
             </BlurModuleContext.Provider>
           </NavBarContext.Provider>
         </PaperDefaultsContext.Provider>
