@@ -10,6 +10,7 @@ import { getTriadicPalette } from '../utils/getTriadicPalette'
 import type { SeedColor } from './ColorPicker'
 import { defaultColors } from './ColorPicker'
 import { Dialog } from './Dialog'
+import { HarmonyPicker } from './HarmonyPicker'
 
 const SIZE = 48
 
@@ -55,12 +56,18 @@ type Props = {
   value: string
   onChange: (color: string) => void
   harmony?: ColorHarmony
+  // Opt-in: passing this turns on a compact, icon-only HarmonyPicker row inside the dialog, above
+  // the swatch grid, so every swatch's own Pie preview reshapes live as harmony changes. Omit it
+  // and this renders exactly as a plain PalettePicker always has — same trigger, same dialog,
+  // harmony fixed at whatever the `harmony` prop says. Gated on the callback itself rather than a
+  // separate boolean so there's no way to pass one without the other.
+  onHarmonyChange?: (harmony: ColorHarmony) => void
   weights?: PaletteWeights
   colors?: SeedColor[]
   blur?: boolean
 }
 
-export const PalettePicker = ({ value, onChange, harmony = 'split-complementary', weights, colors = defaultColors, blur: blurProp }: Props) => {
+export const PalettePicker = ({ value, onChange, harmony = 'split-complementary', onHarmonyChange, weights, colors = defaultColors, blur: blurProp }: Props) => {
   const blur = useBlur(blurProp)
   const { colors: themeColors } = useTheme()
   const [open, setOpen] = useState(false)
@@ -79,6 +86,11 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
 
       <Dialog blur={blur} visible={open} onDismiss={() => setOpen(false)}>
         <Dialog.Content>
+          {onHarmonyChange && (
+            <View style={styles.harmonyRow}>
+              <HarmonyPicker value={harmony} onChange={onHarmonyChange} showLabels={false} />
+            </View>
+          )}
           <View style={styles.swatches} onLayout={onLayout}>
             {colors.map(({ value: hex }) => (
               <TouchableOpacity
@@ -104,6 +116,7 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
 
 const styles = StyleSheet.create({
   halfMask: { height: '100%', left: '50%', overflow: 'hidden', position: 'absolute', top: 0, width: '50%' },
+  harmonyRow: { marginBottom: 4 },
   innerRotator: { height: '100%', left: '-100%', overflow: 'hidden', position: 'absolute', top: 0, width: '200%' },
   pie: { overflow: 'hidden' },
   rotator: { height: '100%', left: 0, overflow: 'hidden', position: 'absolute', top: 0, width: '100%' },

@@ -1,6 +1,6 @@
 import { act, render } from '@testing-library/react'
 import { TouchableOpacity, View } from 'react-native'
-import { Icon, MD3LightTheme, TouchableRipple, useTheme } from 'react-native-paper'
+import { Icon, MD3LightTheme, SegmentedButtons, TouchableRipple, useTheme } from 'react-native-paper'
 
 import { defaultColors } from '../components/ColorPicker'
 import { PalettePicker } from '../components/PalettePicker'
@@ -18,6 +18,7 @@ const mockTouchableOpacity = TouchableOpacity as jest.MockedFunction<typeof Touc
 const mockView = View as unknown as jest.Mock
 const mockIcon = Icon as jest.MockedFunction<typeof Icon>
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>
+const mockSegmentedButtons = SegmentedButtons as jest.MockedFunction<typeof SegmentedButtons>
 
 const OUTLINE = MD3LightTheme.colors.outlineVariant
 
@@ -81,5 +82,26 @@ describe('PalettePicker', () => {
     openDialog()
 
     expect(mockTouchableOpacity.mock.calls).toHaveLength(defaultColors.length)
+  })
+
+  it('omits the harmony row entirely when onHarmonyChange is not passed', () => {
+    render(<PalettePicker value={defaultColors[0].value} onChange={jest.fn()} />)
+    openDialog()
+
+    expect(mockSegmentedButtons.mock.calls).toHaveLength(0)
+  })
+
+  it('shows a compact, label-less harmony row wired to onHarmonyChange when it is passed', () => {
+    const onHarmonyChange = jest.fn()
+    render(<PalettePicker value={defaultColors[0].value} onChange={jest.fn()} harmony='triadic' onHarmonyChange={onHarmonyChange} />)
+    openDialog()
+
+    const call = mockSegmentedButtons.mock.calls[0][0]
+    expect(call.value).toBe('triadic')
+    expect((call.buttons as { label?: string }[]).every((b) => b.label === undefined)).toBe(true)
+
+    const onValueChange = call.onValueChange as (value: string) => void
+    onValueChange('square')
+    expect(onHarmonyChange).toHaveBeenCalledWith('square')
   })
 })

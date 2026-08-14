@@ -327,6 +327,27 @@ function SettingsScreen() {
 | `showLabels` | `boolean` | Set `false` for icon-only segments, useful in tight layouts where "System" would truncate. `accessibilityLabel` is always set regardless, so screen readers still announce the full word. Defaults to `true` |
 | `icons` | `AppearanceIcons` | Per-value icon overrides: pass just the ones you want to change (e.g. `{ system: 'theme-light-dark' }`), merged over the defaults (`monitor` / `white-balance-sunny` / `weather-night`) |
 
+### `HarmonyPicker`
+
+Switches between the 6 `ColorHarmony` modes (`triadic`, `split-complementary`, `analogous`, `square`, `complementary`, `double-split`) via `react-native-paper`'s `SegmentedButtons`. `PalettePicker` can embed this same picker in its own dialog instead of standing alone — see `onHarmonyChange` below.
+
+```tsx
+import { HarmonyPicker, useThemeSettings } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  const { settings: { harmony }, set } = useThemeSettings()
+  return <HarmonyPicker value={harmony} onChange={(h) => set({ harmony: h })} showLabels={false} />
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `value` | `ColorHarmony` | Currently selected harmony |
+| `onChange` | `(harmony: ColorHarmony) => void` | Called when a segment is tapped |
+| `showLabels` | `boolean` | Set `false` for icon-only segments. Also lowers Paper's default 76px-per-segment minimum width down to 0, so all 6 segments can always shrink to fit — however narrow the container, they resize down together instead of overflowing it. `accessibilityLabel` is always set regardless, so screen readers still announce the full harmony name either way. Defaults to `true` |
+| `checkedColor` / `uncheckedColor` | `string` | Icon color for the checked and unchecked segments, matching Paper's own segmented-button vocabulary |
+| `checkedContainerColor` / `uncheckedContainerColor` | `string` | Fill color for the checked and unchecked segments. Omit any of these four color props to fall back to Paper's default segmented-button styling |
+
 ### `Appbar`
 
 A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs `StatusBar` background color and bar style to the current theme surface color.
@@ -432,14 +453,14 @@ import { IconButton } from '@rific/auto-paper'
 
 ### `PalettePicker`
 
-Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking.
+Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking. Pass `onHarmonyChange` to fold a compact, icon-only `HarmonyPicker` row into the same dialog, above the swatch grid — every swatch's own pie reshapes live as harmony changes, so there's one place to tune both instead of two separate controls. Omit it and this renders exactly as a plain color-only picker always has.
 
 ```tsx
 import { PalettePicker, useThemeSettings } from '@rific/auto-paper'
 
 function SettingsScreen() {
   const { settings: { color, harmony }, set } = useThemeSettings()
-  return <PalettePicker value={color} harmony={harmony} onChange={(c) => set({ color: c })} />
+  return <PalettePicker value={color} harmony={harmony} onChange={(c) => set({ color: c })} onHarmonyChange={(h) => set({ harmony: h })} />
 }
 ```
 
@@ -448,6 +469,7 @@ function SettingsScreen() {
 | `value` | `string` | Currently selected seed color |
 | `onChange` | `(color: string) => void` | Called with the seed color when a swatch is tapped |
 | `harmony` | `ColorHarmony` | Harmony used to compute each swatch's preview palette. Defaults to `'split-complementary'` |
+| `onHarmonyChange` | `(harmony: ColorHarmony) => void` | Opt-in: passing this renders the `HarmonyPicker` row inside the dialog. Gated on the callback itself rather than a separate boolean, so there's no way to pass one without the other |
 | `weights` | `PaletteWeights` | Relative size of each wedge: `{ primary, secondary, tertiary }`. Defaults to `{ primary: 2, secondary: 1, tertiary: 1 }` (primary half the pie, secondary/tertiary a quarter each). Values are normalized, so any positive ratio works; keep each share at or under half the total so its wedge stays a single slice |
 | `colors` | `SeedColor[]` | Seed color swatches to offer. Defaults to the same set as `ColorPicker` |
 | `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
