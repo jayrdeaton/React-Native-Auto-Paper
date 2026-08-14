@@ -44,6 +44,8 @@ src/
   components/
     Appbar.tsx              — wraps Appbar.Header; syncs StatusBar to theme surface color
     AppearancePicker.tsx    — SegmentedButtons for system/light/dark appearance
+    AutoAppearancePicker.tsx — AppearancePicker wired straight to useThemeSettings(); no value/onChange
+    AutoPalettePicker.tsx   — PalettePicker wired straight to useThemeSettings(); no value/onChange/harmony/onHarmonyChange
     BlurView.tsx            — wraps expo-blur's BlurView with a solid-color fallback when absent
     BottomNavigation.tsx    — wraps BottomNavigation; syncs Android nav bar icon style
     Button.tsx              — thin wrapper applying PaperDefaults
@@ -51,9 +53,10 @@ src/
     ColorPicker.tsx         — seed color swatch picker
     Dialog.tsx              — wraps Paper Dialog with blur-aware surface
     FAB.tsx                 — thin wrapper applying PaperDefaults
-    HarmonyPicker.tsx       — picker for the six ColorHarmony modes
+    HarmonyPicker.tsx       — SegmentedButtons picker for the six ColorHarmony modes; showLabels=false zeroes Paper's per-segment minWidth so all 6 always fit without clipping
     IconButton.tsx          — adds `variant` prop for theme-derived container/icon colors
     Menu.tsx                — wraps Paper Menu with blur-aware surface
+    PalettePicker.tsx       — triadic-preview color swatch picker; onHarmonyChange embeds HarmonyPicker in its own dialog
     TextInput.tsx           — thin wrapper applying PaperDefaults
   utils/
     colorNames.ts           — CSS named color → hex map
@@ -64,6 +67,7 @@ src/
     getTintTextColor.ts     — contrast-safe text color for content on a BlurView tint
     getTriadicPalette.ts    — generates primary/secondary/tertiary across 6 harmony modes
     isDarkColor.ts          — WCAG relative luminance check
+    resolveSeedColor.ts     — narrows ThemeSettings.color's `string | TriadicPalette` down to a plain string
   redux/
     themeSlice.ts           — optional Redux slice: initialize / setAppearance / setColor / setBlur / setHarmony
 ```
@@ -76,7 +80,7 @@ src/
 - `useThemeSettings()` — read/update the current `ThemeSettings` from inside `Provider`
 - `usePaperDefaults()` — read component prop defaults from context
 - `useBlur(override?)` — resolve the effective blur setting
-- Wrapper components: `Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `TextInput`
+- Wrapper components: `Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`
 - `themeReducer` / `themeActions` / `createThemeReducer` / selectors / `ThemeState` — optional Redux integration
 - Color utils: `getTriadicPalette`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `isDarkColor`, `getRgb`, `getHex`
 

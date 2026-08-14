@@ -11,7 +11,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Fixed `success`/`warning`/`danger` semantic color roles (each with `on*`/`*Container` variants) alongside MD3's built-in `error`
 - Optional Redux slice for wiring appearance and color into your store
-- Wrapper components (`Appbar`, `AppearancePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`) with prop defaults via context
+- Wrapper components (`Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
 
 ## Installation
@@ -327,6 +327,18 @@ function SettingsScreen() {
 | `showLabels` | `boolean` | Set `false` for icon-only segments, useful in tight layouts where "System" would truncate. `accessibilityLabel` is always set regardless, so screen readers still announce the full word. Defaults to `true` |
 | `icons` | `AppearanceIcons` | Per-value icon overrides: pass just the ones you want to change (e.g. `{ system: 'theme-light-dark' }`), merged over the defaults (`monitor` / `white-balance-sunny` / `weather-night`) |
 
+### `AutoAppearancePicker`
+
+`AppearancePicker` wired straight to the `Provider`'s own `ThemeSettings` — for the common case where the appearance being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally, so it takes neither `value` nor `onChange`; every other `AppearancePicker` prop still passes through. Reach for the plain `AppearancePicker` instead when it needs to be controlled by something other than the global theme (a local preview before committing, one-off UI unrelated to `Provider`).
+
+```tsx
+import { AutoAppearancePicker } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  return <AutoAppearancePicker showLabels={false} />
+}
+```
+
 ### `HarmonyPicker`
 
 Switches between the 6 `ColorHarmony` modes (`triadic`, `split-complementary`, `analogous`, `square`, `complementary`, `double-split`) via `react-native-paper`'s `SegmentedButtons`. `PalettePicker` can embed this same picker in its own dialog instead of standing alone — see `onHarmonyChange` below.
@@ -474,6 +486,18 @@ function SettingsScreen() {
 | `colors` | `SeedColor[]` | Seed color swatches to offer. Defaults to the same set as `ColorPicker` |
 | `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
 
+### `AutoPalettePicker`
+
+`PalettePicker` wired straight to the `Provider`'s own `ThemeSettings` — both color AND harmony — for the common case where the palette being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally (narrowing `ThemeSettings.color`'s `string | TriadicPalette` down to a plain string via `resolveSeedColor`), so it takes none of `value`/`onChange`/`harmony`/`onHarmonyChange`; `weights`/`colors`/`blur` still pass through. Reach for the plain `PalettePicker` instead when it needs to be controlled by something other than the global theme.
+
+```tsx
+import { AutoPalettePicker } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  return <AutoPalettePicker />
+}
+```
+
 ### `PaperDefaults` / `usePaperDefaults`
 
 `PaperDefaults` is the type for the `defaults` prop on `Provider`:
@@ -530,7 +554,7 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor } from '@rific/auto-paper'
+import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor, resolveSeedColor } from '@rific/auto-paper'
 import type { ColorHarmony, TriadicPalette } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
@@ -548,6 +572,9 @@ getContrastColor('#6750a4')                  // → '#ffffff' (black/white pick 
 isDarkColor('#6750a4')                       // → true
 getRgb('coral')                              // → { r: 255, g: 127, b: 80 }
 getHex('rgb(255, 0, 0)')                     // → '#ff0000'
+
+resolveSeedColor('#6750a4')                  // → '#6750a4' (already a plain string)
+resolveSeedColor({ primary: '#6750a4', secondary: '#a4916c', tertiary: '#916ca4' }) // → '#6750a4' (a ThemeSettings.color explicit triad narrows to its own primary)
 ```
 
 ## License
