@@ -147,6 +147,7 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string | Tr
   }, [appearance, primaryInput, secondaryInput, tertiaryInput, harmony])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: first render must stay theme-less (README's onReady/splash-screen contract) and Appearance must not be read during render (SSR/hydration risk)
     computeTheme()
   }, [computeTheme])
 
