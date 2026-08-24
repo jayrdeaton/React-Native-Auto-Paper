@@ -49,7 +49,9 @@ export function Provider({ children, defaults, expoBlur, initialValue, navigatio
   }, [])
 
   const onChangeRef = useRef(onChange)
-  onChangeRef.current = onChange
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
   const prevSettings = useRef(settings)
   useEffect(() => {
     if (prevSettings.current !== settings) {

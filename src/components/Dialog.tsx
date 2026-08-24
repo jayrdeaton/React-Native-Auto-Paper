@@ -1,4 +1,4 @@
-import React, { type ComponentType, type ReactNode, useEffect, useRef, useState } from 'react'
+import React, { type ComponentType, type ReactNode, useEffect, useState } from 'react'
 import { Animated, BackHandler, Easing, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { Dialog as PaperDialog, type DialogActionsProps, type DialogContentProps, type DialogProps as PaperDialogProps, type DialogScrollAreaProps, type DialogTitleProps, Portal, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -46,19 +46,22 @@ function DialogComponent({ animatedStyle, blur: blurProp, dismissable = true, di
   const { colors, isV3, roundness } = theme
   const { scale } = theme.animation
   const { bottom, left, right, top } = useSafeAreaInsets()
-  const opacity = useRef(new Animated.Value(visible ? 1 : 0)).current
+  const [opacity] = useState(() => new Animated.Value(visible ? 1 : 0))
   const [mounted, setMounted] = useState(visible)
+
+  if (visible && !mounted) {
+    setMounted(true)
+  }
 
   useEffect(() => {
     if (visible) {
-      setMounted(true)
       Animated.timing(opacity, { duration: scale * ANIMATION_DURATION, easing: Easing.out(Easing.cubic), toValue: 1, useNativeDriver: true }).start()
     } else {
       Animated.timing(opacity, { duration: scale * ANIMATION_DURATION, easing: Easing.out(Easing.cubic), toValue: 0, useNativeDriver: true }).start(({ finished }) => {
         if (finished) setMounted(false)
       })
     }
-  }, [visible])
+  }, [visible, opacity, scale])
 
   useEffect(() => {
     if (!visible) return undefined
