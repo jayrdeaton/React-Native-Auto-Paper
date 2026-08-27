@@ -74,7 +74,7 @@ src/
 
 ## Public API
 
-- `Provider` (exported as `ThemeProvider`/`AutoPaperProvider` in docs) — wraps `PaperProvider`, accepts `initialValue`, `defaults`, `onChange`, `onNavBarChange`, `onReady`, `reanimated`, `statusBarProps`, `style`
+- `Provider` (exported as `ThemeProvider`/`AutoPaperProvider` in docs) — wraps `PaperProvider`, accepts `initialValue`, `defaults`, `fontFamily`, `onChange`, `onNavBarChange`, `onReady`, `reanimated`, `statusBarProps`, `style`
 - `useReanimatedModule()` — resolves the injected `reanimated` module (or `undefined`); `Dialog`'s `animatedStyle` prop only animates on the UI thread when this is present, otherwise it's ignored
 - `useComputedTheme(appearance, color, harmony?)` — returns `MD3Theme | null`
 - `useThemeSettings()` — read/update the current `ThemeSettings` from inside `Provider`

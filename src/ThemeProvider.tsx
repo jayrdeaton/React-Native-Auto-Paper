@@ -1,6 +1,6 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { StatusBar, type StatusBarProps, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import { Provider as PaperProvider } from 'react-native-paper'
+import { configureFonts, Provider as PaperProvider } from 'react-native-paper'
 
 import type { ExpoBlurModule } from './components/BlurView'
 import type { ReanimatedModule } from './components/Dialog'
@@ -29,6 +29,12 @@ export type ProviderProps = {
   defaults?: PaperDefaults
   /** Injects expo-blur for `<BlurView>`. Pass `import * as ExpoBlur from 'expo-blur'`; omit to always render BlurView's solid fallback. */
   expoBlur?: ExpoBlurModule
+  /** Applied to every Paper typography variant (bodyLarge, headlineMedium, labelSmall, ...) via
+   * `configureFonts`'s flat-config mode — each variant keeps its own MD3 fontSize/lineHeight/weight,
+   * only fontFamily changes. The one-line way to reskin an app's whole text to a custom typeface,
+   * instead of passing `fontFamily` to every individual Text/TextInput/Button across the app. Omit
+   * to keep each platform's system font (MD3's own default). */
+  fontFamily?: string
   initialValue?: Partial<ThemeSettings>
   /** Injects expo-navigation-bar so the Android nav bar icon style auto-syncs with the theme. Pass `import * as ExpoNavigationBar from 'expo-navigation-bar'`; omit (and don't pass onNavBarChange) to skip nav bar syncing entirely. */
   navigationBar?: ExpoNavigationBarModule
@@ -41,7 +47,7 @@ export type ProviderProps = {
   style?: StyleProp<ViewStyle>
 }
 
-export function Provider({ children, defaults, expoBlur, initialValue, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
+export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
   const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...initialValue }))
 
   const set = useCallback((patch: Partial<ThemeSettings>) => {
@@ -60,7 +66,17 @@ export function Provider({ children, defaults, expoBlur, initialValue, navigatio
     }
   }, [settings])
 
-  const theme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
+  const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
+  // Layered on top of useComputedTheme's own output rather than folded into it — that hook only
+  // ever recomputes for a color/appearance/harmony change, and fontFamily is a completely
+  // independent axis; merging it there would mean either re-running the whole color computation on
+  // every fontFamily change (wasteful) or threading fontFamily through as a fourth computeTheme
+  // dependency for a value it never actually uses.
+  const theme = useMemo(() => {
+    if (!computedTheme) return null
+    if (!fontFamily) return computedTheme
+    return { ...computedTheme, fonts: configureFonts({ config: { fontFamily } }) }
+  }, [computedTheme, fontFamily])
   const called = useRef(false)
 
   useEffect(() => {
