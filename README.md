@@ -10,6 +10,7 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 - System/light/dark appearance with live updates via `Appearance` API
 - Tinted surface, surfaceVariant, outline, and elevation levels derived from the seed
 - Fixed `success`/`warning`/`danger` semantic color roles (each with `on*`/`*Container` variants) alongside MD3's built-in `error`
+- App-wide `fontFamily` override, applied across every Paper typography variant in one prop
 - Optional Redux slice for wiring appearance and color into your store
 - Wrapper components (`Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`) with prop defaults via context
 - All color utilities exported for standalone use
@@ -57,6 +58,14 @@ export default function App() {
 
 ```tsx
 <AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4' }} onReady={SplashScreen.hideAsync}>
+  {/* your app */}
+</AutoPaperProvider>
+```
+
+Pass `fontFamily` to reskin every Paper component's text to a custom typeface app-wide, instead of passing `fontFamily` to each individual `Text`/`TextInput`/`Button` yourself:
+
+```tsx
+<AutoPaperProvider initialValue={{ appearance: 'system', color: '#6750a4' }} fontFamily='Menlo'>
   {/* your app */}
 </AutoPaperProvider>
 ```
@@ -235,6 +244,7 @@ export default function App() {
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. |
+| `fontFamily` | `string` | Applied to every Paper typography variant (`bodyLarge`, `headlineMedium`, `labelSmall`, ...) via `configureFonts`'s flat-config mode — each variant keeps its own MD3 fontSize/lineHeight/weight, only fontFamily changes. Omit to keep each platform's system font. |
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
