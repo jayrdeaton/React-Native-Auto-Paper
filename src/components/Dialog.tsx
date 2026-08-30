@@ -81,7 +81,7 @@ function DialogComponent({ animatedStyle, blur: blurProp, dismissable = true, di
     .filter((child) => child != null && typeof child !== 'boolean')
     .map((child, i) => {
       if (isV3) {
-        if (i === 0 && React.isValidElement<DialogContentProps>(child)) {
+        if (i === 0 && React.isValidElement<DialogContentProps>(child) && child.type === PaperDialog.Content) {
           return React.cloneElement(child, { style: [{ marginTop: 24 }, child.props.style] })
         }
       }

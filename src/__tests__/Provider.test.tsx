@@ -11,9 +11,9 @@ function ReadSettings() {
   const { settings } = useContext(ThemeSettingsContext)
   return (
     <>
-      <span data-testid="appearance">{settings.appearance}</span>
-      <span data-testid="color">{typeof settings.color === 'string' ? settings.color : JSON.stringify(settings.color)}</span>
-      <span data-testid="harmony">{settings.harmony}</span>
+      <span data-testid='appearance'>{settings.appearance}</span>
+      <span data-testid='color'>{typeof settings.color === 'string' ? settings.color : JSON.stringify(settings.color)}</span>
+      <span data-testid='harmony'>{settings.harmony}</span>
     </>
   )
 }
@@ -26,34 +26,58 @@ beforeEach(() => {
 
 describe('Provider', () => {
   it('renders children after theme resolves', () => {
-    render(<Provider><span data-testid="child">hello</span></Provider>)
+    render(
+      <Provider>
+        <span data-testid='child'>hello</span>
+      </Provider>
+    )
     expect(screen.getByTestId('child')).toBeTruthy()
   })
 
   it('uses defaultThemeSettings when no initialValue is provided', () => {
-    render(<Provider><ReadSettings /></Provider>)
+    render(
+      <Provider>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('appearance').textContent).toBe(defaultThemeSettings.appearance)
     expect(screen.getByTestId('color').textContent).toBe(defaultThemeSettings.color)
     expect(screen.getByTestId('harmony').textContent).toBe(defaultThemeSettings.harmony)
   })
 
   it('applies initialValue.appearance', () => {
-    render(<Provider initialValue={{ appearance: 'dark' }}><ReadSettings /></Provider>)
+    render(
+      <Provider initialValue={{ appearance: 'dark' }}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('appearance').textContent).toBe('dark')
   })
 
   it('applies initialValue.color', () => {
-    render(<Provider initialValue={{ color: '#ff0000' }}><ReadSettings /></Provider>)
+    render(
+      <Provider initialValue={{ color: '#ff0000' }}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('color').textContent).toBe('#ff0000')
   })
 
   it('applies initialValue.harmony', () => {
-    render(<Provider initialValue={{ harmony: 'triadic' }}><ReadSettings /></Provider>)
+    render(
+      <Provider initialValue={{ harmony: 'triadic' }}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('harmony').textContent).toBe('triadic')
   })
 
   it('merges partial initialValue with defaults', () => {
-    render(<Provider initialValue={{ color: '#00ff00' }}><ReadSettings /></Provider>)
+    render(
+      <Provider initialValue={{ color: '#00ff00' }}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('color').textContent).toBe('#00ff00')
     expect(screen.getByTestId('appearance').textContent).toBe(defaultThemeSettings.appearance)
     expect(screen.getByTestId('harmony').textContent).toBe(defaultThemeSettings.harmony)
@@ -61,19 +85,31 @@ describe('Provider', () => {
 
   it('calls onReady once when theme resolves', () => {
     const onReady = jest.fn()
-    render(<Provider onReady={onReady}><span /></Provider>)
+    render(
+      <Provider onReady={onReady}>
+        <span />
+      </Provider>
+    )
     expect(onReady).toHaveBeenCalledTimes(1)
   })
 
   it('accepts an explicit { primary, secondary, tertiary } triad for initialValue.color', () => {
     const triad = { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' }
-    render(<Provider initialValue={{ color: triad }}><ReadSettings /></Provider>)
+    render(
+      <Provider initialValue={{ color: triad }}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(screen.getByTestId('color').textContent).toBe(JSON.stringify(triad))
   })
 
   it('does not call onChange on initial render', () => {
     const onChange = jest.fn()
-    render(<Provider onChange={onChange}><ReadSettings /></Provider>)
+    render(
+      <Provider onChange={onChange}>
+        <ReadSettings />
+      </Provider>
+    )
     expect(onChange).not.toHaveBeenCalled()
   })
 })

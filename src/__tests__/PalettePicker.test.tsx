@@ -3,14 +3,17 @@ import { TouchableOpacity, View } from 'react-native'
 import { Icon, MD3LightTheme, SegmentedButtons, TouchableRipple, useTheme } from 'react-native-paper'
 
 import { defaultColors } from '../components/ColorPicker'
+import { Dialog } from '../components/Dialog'
 import { PalettePicker } from '../components/PalettePicker'
 import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
 
-// See ColorPicker.test.tsx for why Dialog is stubbed rather than rendered for real.
+// See ColorPicker.test.tsx for why Dialog is stubbed rather than rendered for real. Wrapped in
+// jest.fn() (rather than the plain function component other suites stub it with) so this file can
+// also inspect the props PalettePicker passes to Dialog, namely onDismiss below.
 jest.mock('../components/Dialog', () => {
-  const DialogMock = ({ visible, children }: { visible?: boolean; children?: React.ReactNode }) => (visible ? (children ?? null) : null)
-  DialogMock.Content = ({ children }: { children?: React.ReactNode }) => children ?? null
-  return { Dialog: DialogMock }
+  const DialogMock = jest.fn(({ visible, children }: { visible?: boolean; children?: React.ReactNode }) => (visible ? (children ?? null) : null))
+  const DialogContentMock = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
+  return { Dialog: Object.assign(DialogMock, { Content: DialogContentMock }) }
 })
 
 const mockTouchableRipple = TouchableRipple as jest.MockedFunction<typeof TouchableRipple>
@@ -19,6 +22,7 @@ const mockView = View as unknown as jest.Mock
 const mockIcon = Icon as jest.MockedFunction<typeof Icon>
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>
 const mockSegmentedButtons = SegmentedButtons as jest.MockedFunction<typeof SegmentedButtons>
+const mockDialog = Dialog as jest.MockedFunction<typeof Dialog>
 
 const OUTLINE = MD3LightTheme.colors.outlineVariant
 
@@ -38,14 +42,14 @@ const ringViewStyles = () => mockView.mock.calls.filter(([props]) => (props as {
 
 describe('PalettePicker', () => {
   it("rings the trigger's overlay icon with the resting ring against the theme outline", () => {
-    render(<PalettePicker value="#ffffff" onChange={jest.fn()} />)
+    render(<PalettePicker value='#ffffff' onChange={jest.fn()} />)
 
     const [triggerRing] = ringViewStyles()
     expect(triggerRing).toEqual(expect.arrayContaining([expect.objectContaining(getSwatchRing('#ffffff', false, OUTLINE))]))
   })
 
   it("picks the trigger icon's color for contrast against the seed color's own fill", () => {
-    render(<PalettePicker value="#ffffff" onChange={jest.fn()} />)
+    render(<PalettePicker value='#ffffff' onChange={jest.fn()} />)
 
     expect(mockIcon.mock.calls[0][0].color).toBe(getContrastColor('#ffffff'))
   })
@@ -103,5 +107,17 @@ describe('PalettePicker', () => {
     const onValueChange = call.onValueChange as (value: string) => void
     onValueChange('square')
     expect(onHarmonyChange).toHaveBeenCalledWith('square')
+  })
+
+  it('closes the dialog by flipping visible back to false when Dialog fires onDismiss', () => {
+    render(<PalettePicker value={defaultColors[0].value} onChange={jest.fn()} />)
+    openDialog()
+
+    const lastDialogProps = () => mockDialog.mock.calls[mockDialog.mock.calls.length - 1][0]
+    expect(lastDialogProps().visible).toBe(true)
+
+    act(() => lastDialogProps().onDismiss?.())
+
+    expect(lastDialogProps().visible).toBe(false)
   })
 })

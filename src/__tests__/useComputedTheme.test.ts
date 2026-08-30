@@ -59,6 +59,12 @@ describe('useComputedTheme', () => {
     expect(result.current?.dark).toBe(true)
   })
 
+  it('resolves system to light when getColorScheme returns null (no OS preference set)', () => {
+    mockAppearance.getColorScheme.mockReturnValue(null)
+    const { result } = renderHook(() => useComputedTheme('system', '#6750a4'))
+    expect(result.current?.dark).toBe(false)
+  })
+
   it('subscribes to Appearance.addChangeListener on mount', () => {
     renderHook(() => useComputedTheme('system', '#6750a4'))
     expect(mockAppearance.addChangeListener).toHaveBeenCalled()
@@ -73,22 +79,20 @@ describe('useComputedTheme', () => {
   })
 
   it('recomputes when color changes', () => {
-    const { result, rerender } = renderHook(
-      ({ color }: { color: string }) => useComputedTheme('light', color),
-      { initialProps: { color: '#ff0000' } }
-    )
+    const { result, rerender } = renderHook(({ color }: { color: string }) => useComputedTheme('light', color), { initialProps: { color: '#ff0000' } })
     expect(result.current?.colors.primary).toBe('#ff0000')
-    act(() => { rerender({ color: '#0000ff' }) })
+    act(() => {
+      rerender({ color: '#0000ff' })
+    })
     expect(result.current?.colors.primary).toBe('#0000ff')
   })
 
   it('recomputes when appearance changes', () => {
-    const { result, rerender } = renderHook(
-      ({ appearance }: { appearance: ThemeAppearance }) => useComputedTheme(appearance, '#6750a4'),
-      { initialProps: { appearance: 'light' as ThemeAppearance } }
-    )
+    const { result, rerender } = renderHook(({ appearance }: { appearance: ThemeAppearance }) => useComputedTheme(appearance, '#6750a4'), { initialProps: { appearance: 'light' as ThemeAppearance } })
     expect(result.current?.dark).toBe(false)
-    act(() => { rerender({ appearance: 'dark' }) })
+    act(() => {
+      rerender({ appearance: 'dark' })
+    })
     expect(result.current?.dark).toBe(true)
   })
 
@@ -110,13 +114,15 @@ describe('useComputedTheme', () => {
     it("doesn't change success/warning/danger when the seed color changes (fixed, not seed-derived)", () => {
       const { result, rerender } = renderHook(({ color }: { color: string }) => useComputedTheme('light', color), { initialProps: { color: '#ff0000' } })
       const before = { success: result.current?.colors.success, warning: result.current?.colors.warning, danger: result.current?.colors.danger }
-      act(() => { rerender({ color: '#00ffee' }) })
+      act(() => {
+        rerender({ color: '#00ffee' })
+      })
       expect(result.current?.colors.success).toBe(before.success)
       expect(result.current?.colors.warning).toBe(before.warning)
       expect(result.current?.colors.danger).toBe(before.danger)
     })
 
-    it('keeps danger distinct from MD3\'s own error role', () => {
+    it("keeps danger distinct from MD3's own error role", () => {
       const { result } = renderHook(() => useComputedTheme('light', '#6750a4'))
       expect(result.current?.colors.danger).not.toBe(result.current?.colors.error)
     })
@@ -154,13 +160,17 @@ describe('useComputedTheme', () => {
     it('does not recompute when a structurally-identical object literal is passed on rerender', () => {
       const { result, rerender } = renderHook(({ color }: { color: typeof triad }) => useComputedTheme('light', color), { initialProps: { color: triad } })
       const before = result.current
-      act(() => { rerender({ color: { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' } }) })
+      act(() => {
+        rerender({ color: { primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' } })
+      })
       expect(result.current).toBe(before)
     })
 
     it('recomputes when a field in the triad changes', () => {
       const { result, rerender } = renderHook(({ color }: { color: typeof triad }) => useComputedTheme('light', color), { initialProps: { color: triad } })
-      act(() => { rerender({ color: { ...triad, secondary: '#ffff00' } }) })
+      act(() => {
+        rerender({ color: { ...triad, secondary: '#ffff00' } })
+      })
       expect(result.current?.colors.secondary).toBe('#ffff00')
     })
   })

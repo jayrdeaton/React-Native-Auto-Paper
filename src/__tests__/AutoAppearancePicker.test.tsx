@@ -24,7 +24,7 @@ describe('AutoAppearancePicker', () => {
     expect(mockSegmentedButtons.mock.calls[0][0].value).toBe('dark')
   })
 
-  it("writes changes straight back into ThemeSettings via set(), with no onChange prop to wire up", () => {
+  it('writes changes straight back into ThemeSettings via set(), with no onChange prop to wire up', () => {
     const set = jest.fn()
     renderWithSettings('system', set)
 

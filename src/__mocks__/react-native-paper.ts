@@ -69,3 +69,42 @@ export const TouchableRipple = jest.fn(({ children }: { children?: React.ReactNo
 export const Provider = ({ children }: { children?: React.ReactNode }) => children ?? null
 
 export const useTheme = jest.fn(() => MD3LightTheme)
+
+export const Button = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
+
+export const FAB = jest.fn(() => null)
+
+export const TextInput = React.forwardRef((_props: unknown, ref: React.Ref<unknown>) => {
+  if (typeof ref === 'function') ref({})
+  else if (ref) ref.current = {}
+  return null
+})
+
+export const Menu = Object.assign(
+  jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null),
+  { Item: jest.fn(() => null) }
+)
+
+export const Appbar = {
+  Header: jest.fn(() => null),
+  Content: jest.fn(() => null),
+  Action: jest.fn(() => null),
+  BackAction: jest.fn(() => null)
+}
+
+export const BottomNavigation = Object.assign(jest.fn(() => null), {
+  Bar: jest.fn(() => null),
+  SceneMap: jest.fn()
+})
+
+export const Dialog = Object.assign(
+  jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null),
+  {
+    Title: jest.fn(() => null),
+    Content: jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null),
+    Actions: jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null),
+    ScrollArea: jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
+  }
+)
+
+export const Portal = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)

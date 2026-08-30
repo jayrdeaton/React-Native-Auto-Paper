@@ -1,4 +1,4 @@
-import { themeActions, themeReducer, ThemeState } from '../redux/themeSlice'
+import { createThemeReducer, selectThemeAppearance, selectThemeBlur, selectThemeColor, selectThemeHarmony, themeActions, themeReducer, ThemeState } from '../redux/themeSlice'
 
 const initial: ThemeState = { appearance: 'system', blur: true, color: '#6750a4', harmony: 'split-complementary' }
 
@@ -35,5 +35,46 @@ describe('themeSlice', () => {
     const state = themeReducer(initial, themeActions.initialize({ appearance: 'light', color: '#0000ff' }))
     expect(state.appearance).toBe('light')
     expect(state.color).toBe('#0000ff')
+  })
+
+  describe('createThemeReducer', () => {
+    it('merges a partial initial state into defaultInitialState', () => {
+      const reducer = createThemeReducer({ color: '#123456' })
+      const state = reducer(undefined, { type: '@@INIT' })
+      expect(state).toEqual({ appearance: 'system', blur: true, color: '#123456', harmony: 'split-complementary' })
+    })
+
+    it('falls back to the full defaultInitialState when called with no args', () => {
+      const reducer = createThemeReducer()
+      const state = reducer(undefined, { type: '@@INIT' })
+      expect(state).toEqual(initial)
+    })
+
+    it('returned reducer still handles dispatched actions via reduce', () => {
+      const reducer = createThemeReducer({ color: '#123456' })
+      const state = reducer(undefined, themeActions.setAppearance('dark'))
+      expect(state.appearance).toBe('dark')
+      expect(state.color).toBe('#123456')
+    })
+  })
+
+  describe('selectors', () => {
+    const state: ThemeState = { appearance: 'dark', blur: false, color: '#abcdef', harmony: 'triadic' }
+
+    it('selectThemeAppearance reads appearance', () => {
+      expect(selectThemeAppearance(state)).toBe('dark')
+    })
+
+    it('selectThemeBlur reads blur', () => {
+      expect(selectThemeBlur(state)).toBe(false)
+    })
+
+    it('selectThemeColor reads color', () => {
+      expect(selectThemeColor(state)).toBe('#abcdef')
+    })
+
+    it('selectThemeHarmony reads harmony', () => {
+      expect(selectThemeHarmony(state)).toBe('triadic')
+    })
   })
 })

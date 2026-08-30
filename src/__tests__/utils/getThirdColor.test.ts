@@ -49,4 +49,29 @@ describe('getThirdColor', () => {
   it('throws on invalid second color', () => {
     expect(() => getThirdColor('#ff0000', 'notacolor')).toThrow('Invalid color format')
   })
+
+  it('fallback hue for exact complements computes (hA + 90) % 360', () => {
+    // red (hue 0) and cyan (hue 180) are exact complements, so x=y=0 and thirdHue
+    // falls back to (0 + 90) % 360 = 90, averaging both inputs' full saturation and mid lightness
+    const result = getThirdColor('#ff0000', '#00ffff')
+    expect(result).toBe('#80ff00')
+  })
+
+  it('exercises the hslToHex h < 60 branch', () => {
+    // green (hue 120) and blue (hue 240) produce a thirdHue of exactly 0
+    const result = getThirdColor('#00ff00', '#0000ff')
+    expect(result).toBe('#ff0000')
+  })
+
+  it('exercises the hslToHex h < 300 branch away from the boundary', () => {
+    // red (hue 0) and spring green (hue 150) produce a thirdHue of ~255, well inside [240, 300)
+    const result = getThirdColor('#ff0000', '#00ff80')
+    expect(result).toBe('#4000ff')
+  })
+
+  it('exercises the hslToHex final else branch (h >= 300)', () => {
+    // yellow (hue 60) and cyan (hue 180) produce a thirdHue of exactly 300
+    const result = getThirdColor('#ffff00', '#00ffff')
+    expect(result).toBe('#ff00ff')
+  })
 })
