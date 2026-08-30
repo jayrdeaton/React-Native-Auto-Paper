@@ -5,7 +5,7 @@ describe('resolveSeedColor', () => {
     expect(resolveSeedColor('#6750a4')).toBe('#6750a4')
   })
 
-  it("narrows a TriadicPalette down to its own primary", () => {
+  it('narrows a TriadicPalette down to its own primary', () => {
     expect(resolveSeedColor({ primary: '#ff0000', secondary: '#00ff00', tertiary: '#0000ff' })).toBe('#ff0000')
   })
 })

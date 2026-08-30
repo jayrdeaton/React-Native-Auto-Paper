@@ -34,14 +34,14 @@ const openDialog = () => {
 
 describe('ColorPicker', () => {
   it('rings the trigger with the resting (unselected) ring against the theme outline', () => {
-    render(<ColorPicker value="#ffffff" onChange={jest.fn()} />)
+    render(<ColorPicker value='#ffffff' onChange={jest.fn()} />)
 
     const { style } = mockTouchableRipple.mock.calls[0][0] as { style: object[] }
     expect(style).toEqual(expect.arrayContaining([expect.objectContaining(getSwatchRing('#ffffff', false, OUTLINE))]))
   })
 
   it("picks the trigger icon's color for contrast against the seed color's own fill", () => {
-    render(<ColorPicker value="#ffffff" onChange={jest.fn()} />)
+    render(<ColorPicker value='#ffffff' onChange={jest.fn()} />)
 
     expect(mockIcon.mock.calls[0][0].color).toBe(getContrastColor('#ffffff'))
     expect(mockIcon.mock.calls[0][0].color).not.toBe('white')

@@ -12,7 +12,7 @@ beforeEach(() => {
 describe('AppearancePicker', () => {
   it('passes the current value through and maps onValueChange to onChange', () => {
     const onChange = jest.fn()
-    render(<AppearancePicker value="dark" onChange={onChange} />)
+    render(<AppearancePicker value='dark' onChange={onChange} />)
 
     const call = mockSegmentedButtons.mock.calls[0][0]
     expect(call.value).toBe('dark')
@@ -26,14 +26,14 @@ describe('AppearancePicker', () => {
   })
 
   it('shows a label per segment by default', () => {
-    render(<AppearancePicker value="system" onChange={jest.fn()} />)
+    render(<AppearancePicker value='system' onChange={jest.fn()} />)
 
     const { buttons } = mockSegmentedButtons.mock.calls[0][0]
     expect(buttons.map((b) => b.label)).toEqual(['System', 'Light', 'Dark'])
   })
 
   it('hides the visual label but keeps accessibilityLabel when showLabels is false', () => {
-    render(<AppearancePicker value="system" onChange={jest.fn()} showLabels={false} />)
+    render(<AppearancePicker value='system' onChange={jest.fn()} showLabels={false} />)
 
     const { buttons } = mockSegmentedButtons.mock.calls[0][0]
     expect(buttons.map((b) => b.label)).toEqual([undefined, undefined, undefined])
@@ -41,14 +41,14 @@ describe('AppearancePicker', () => {
   })
 
   it('uses monitor/white-balance-sunny/weather-night by default', () => {
-    render(<AppearancePicker value="system" onChange={jest.fn()} />)
+    render(<AppearancePicker value='system' onChange={jest.fn()} />)
 
     const { buttons } = mockSegmentedButtons.mock.calls[0][0]
     expect(buttons.map((b) => b.icon)).toEqual(['monitor', 'white-balance-sunny', 'weather-night'])
   })
 
   it('overrides only the given icons, leaving the rest at their default', () => {
-    render(<AppearancePicker value="system" onChange={jest.fn()} icons={{ system: 'theme-light-dark' }} />)
+    render(<AppearancePicker value='system' onChange={jest.fn()} icons={{ system: 'theme-light-dark' }} />)
 
     const { buttons } = mockSegmentedButtons.mock.calls[0][0]
     expect(buttons.map((b) => b.icon)).toEqual(['theme-light-dark', 'white-balance-sunny', 'weather-night'])
