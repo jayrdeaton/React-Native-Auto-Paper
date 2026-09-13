@@ -1,3 +1,5 @@
+import { createSettingsSlice } from '@rific/core'
+
 import { ThemeAppearance } from '../useComputedTheme'
 import type { ColorHarmony, TriadicPalette } from '../utils/getTriadicPalette'
 
@@ -17,43 +19,20 @@ const defaultInitialState: ThemeState = {
   harmony: 'split-complementary'
 }
 
-// Hand-rolled slice (no @reduxjs/toolkit dependency). Action types and creator
-// behavior match the previous createSlice implementation exactly, so this works
-// with RTK stores, vanilla Redux, or any reducer-based state container.
-type PayloadAction<P> = { payload: P; type: string }
+const themeSlice = createSettingsSlice('theme', {
+  initialState: defaultInitialState,
+  initializeMode: 'merge' as const,
+  selectors: ['appearance', 'blur', 'color', 'harmony'] as const
+})
 
-const createAction = <P>(type: string) => {
-  const actionCreator = (payload: P): PayloadAction<P> => ({ payload, type })
-  actionCreator.type = type
-  actionCreator.match = (action: { type: string }): action is PayloadAction<P> => action.type === type
-  return actionCreator
-}
+export const themeActions = themeSlice.actions
+export const themeReducer = themeSlice.reducer
+export const createThemeReducer = themeSlice.createReducer
 
-const initialize = createAction<Partial<ThemeState>>('theme/initialize')
-const setAppearance = createAction<ThemeAppearance>('theme/setAppearance')
-const setBlur = createAction<boolean>('theme/setBlur')
-const setColor = createAction<string | TriadicPalette>('theme/setColor')
-const setHarmony = createAction<ColorHarmony>('theme/setHarmony')
-
-export const themeActions = { initialize, setAppearance, setBlur, setColor, setHarmony }
-
-const reduce = (state: ThemeState, action: { type: string }): ThemeState => {
-  if (initialize.match(action)) return { ...state, ...action.payload }
-  if (setAppearance.match(action)) return { ...state, appearance: action.payload }
-  if (setBlur.match(action)) return { ...state, blur: action.payload }
-  if (setColor.match(action)) return { ...state, color: action.payload }
-  if (setHarmony.match(action)) return { ...state, harmony: action.payload }
-  return state
-}
-
-export function createThemeReducer(initialState?: Partial<ThemeState>) {
-  const initial = { ...defaultInitialState, ...initialState }
-  return (state: ThemeState = initial, action: { type: string }): ThemeState => reduce(state, action)
-}
-
-export const themeReducer = (state: ThemeState = defaultInitialState, action: { type: string }): ThemeState => reduce(state, action)
-
-export const selectThemeAppearance = (state: ThemeState) => state.appearance
-export const selectThemeBlur = (state: ThemeState) => state.blur
-export const selectThemeColor = (state: ThemeState) => state.color
-export const selectThemeHarmony = (state: ThemeState) => state.harmony
+// This package's existing public selector names carry a `Theme` infix the factory's generic
+// select${Field} naming doesn't produce - remapped explicitly rather than teaching the factory a
+// one-off naming convention only this package wants.
+export const selectThemeAppearance = themeSlice.selectors.selectAppearance
+export const selectThemeBlur = themeSlice.selectors.selectBlur
+export const selectThemeColor = themeSlice.selectors.selectColor
+export const selectThemeHarmony = themeSlice.selectors.selectHarmony

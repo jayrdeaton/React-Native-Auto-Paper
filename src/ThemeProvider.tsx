@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef } from 'react'
 import { StatusBar, type StatusBarProps, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { configureFonts, Provider as PaperProvider } from 'react-native-paper'
 
@@ -6,7 +6,7 @@ import type { ExpoBlurModule } from './components/BlurView'
 import type { ReanimatedModule } from './components/Dialog'
 import type { ExpoNavigationBarModule } from './navigation-bar'
 import { type PaperDefaults, PaperDefaultsContext } from './PaperDefaultsContext'
-import { defaultThemeSettings, type ThemeSettings, ThemeSettingsContext } from './ThemeSettingsContext'
+import { type ThemeSettings, themeSettingsProvider, useThemeSettingsInternal } from './ThemeSettingsContext'
 import { useComputedTheme } from './useComputedTheme'
 
 // expo-navigation-bar/expo-blur are no longer auto-detected via require() - Metro doesn't
@@ -47,24 +47,28 @@ export type ProviderProps = {
   style?: StyleProp<ViewStyle>
 }
 
+// createSettingsContext's generated Provider only exposes `settings` to descendants (via its
+// generated useSettings()) — it can't itself also compute the theme/gate mounting on it being
+// ready, since that logic needs `settings` in scope. Provider (below) is just this thin outer
+// wrapper for the settings half; ThemeProviderBody (an actual descendant, reached via
+// useThemeSettingsInternal()) does all the theme-computation/gating work the single combined
+// component used to do directly.
 export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
-  const [settings, setSettings] = useState<ThemeSettings>(() => ({ ...defaultThemeSettings, ...initialValue }))
+  return (
+    <ThemeSettingsProvider initialValue={initialValue} onChange={onChange}>
+      <ThemeProviderBody defaults={defaults} expoBlur={expoBlur} fontFamily={fontFamily} navigationBar={navigationBar} onNavBarChange={onNavBarChange} onReady={onReady} reanimated={reanimated} statusBarProps={statusBarProps} style={style}>
+        {children}
+      </ThemeProviderBody>
+    </ThemeSettingsProvider>
+  )
+}
 
-  const set = useCallback((patch: Partial<ThemeSettings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }))
-  }, [])
+const ThemeSettingsProvider = themeSettingsProvider
 
-  const onChangeRef = useRef(onChange)
-  useEffect(() => {
-    onChangeRef.current = onChange
-  })
-  const prevSettings = useRef(settings)
-  useEffect(() => {
-    if (prevSettings.current !== settings) {
-      prevSettings.current = settings
-      onChangeRef.current?.(settings)
-    }
-  }, [settings])
+type ThemeProviderBodyProps = Omit<ProviderProps, 'initialValue' | 'onChange'>
+
+function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, navigationBar, onNavBarChange, onReady, reanimated, statusBarProps, style }: ThemeProviderBodyProps) {
+  const { settings } = useThemeSettingsInternal()
 
   const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
   // Layered on top of useComputedTheme's own output rather than folded into it — that hook only
@@ -89,20 +93,18 @@ export function Provider({ children, defaults, expoBlur, fontFamily, initialValu
   if (!theme) return null
 
   return (
-    <ThemeSettingsContext.Provider value={{ settings, set }}>
-      <PaperProvider theme={theme}>
-        <StatusBar backgroundColor={theme.colors.background} barStyle={theme.dark ? 'light-content' : 'dark-content'} {...statusBarProps} />
-        <PaperDefaultsContext.Provider value={defaults ?? {}}>
-          <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
-            <BlurModuleContext.Provider value={expoBlur}>
-              <ReanimatedModuleContext.Provider value={reanimated}>
-                <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
-              </ReanimatedModuleContext.Provider>
-            </BlurModuleContext.Provider>
-          </NavBarContext.Provider>
-        </PaperDefaultsContext.Provider>
-      </PaperProvider>
-    </ThemeSettingsContext.Provider>
+    <PaperProvider theme={theme}>
+      <StatusBar backgroundColor={theme.colors.background} barStyle={theme.dark ? 'light-content' : 'dark-content'} {...statusBarProps} />
+      <PaperDefaultsContext.Provider value={defaults ?? {}}>
+        <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
+          <BlurModuleContext.Provider value={expoBlur}>
+            <ReanimatedModuleContext.Provider value={reanimated}>
+              <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+            </ReanimatedModuleContext.Provider>
+          </BlurModuleContext.Provider>
+        </NavBarContext.Provider>
+      </PaperDefaultsContext.Provider>
+    </PaperProvider>
   )
 }
 
