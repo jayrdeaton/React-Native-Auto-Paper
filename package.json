@@ -72,6 +72,7 @@
     "@infinitetoken/jest-config": "^0.2.0",
     "@infinitetoken/tsconfig": "^0.3.0",
     "@reduxjs/toolkit": "^2.0.0",
+    "@rific/core": "^0.1.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.0.0",
     "@types/jest": "^30.0.0",
@@ -93,6 +94,7 @@
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
+    "@rific/core": ">=0.1.1",
     "expo-blur": ">=56.0.0",
     "expo-navigation-bar": ">=56.0.0",
     "react": ">=19.0.0",

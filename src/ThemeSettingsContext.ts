@@ -1,4 +1,4 @@
-import { createContext } from 'react'
+import { createSettingsContext, type SettingsContextValue } from '@rific/core'
 
 import type { ThemeAppearance } from './useComputedTheme'
 import type { ColorHarmony, TriadicPalette } from './utils/getTriadicPalette'
@@ -19,12 +19,13 @@ export const defaultThemeSettings: ThemeSettings = {
   harmony: 'split-complementary'
 }
 
-export type ThemeSettingsContextType = {
-  settings: ThemeSettings
-  set: (patch: Partial<ThemeSettings>) => void
-}
+export type ThemeSettingsContextType = SettingsContextValue<ThemeSettings>
 
-export const ThemeSettingsContext = createContext<ThemeSettingsContextType>({
-  settings: defaultThemeSettings,
-  set: () => {}
-})
+// Single createSettingsContext() call, shared by ThemeProvider.tsx and useThemeSettings.ts (each
+// just re-exports the relevant piece under its original name) so there's exactly one Context
+// instance backing all three files, same as before this migration.
+const themeSettingsContext = createSettingsContext<ThemeSettings>(defaultThemeSettings)
+
+export const ThemeSettingsContext = themeSettingsContext.Context
+export const themeSettingsProvider = themeSettingsContext.Provider
+export const useThemeSettingsInternal = themeSettingsContext.useSettings

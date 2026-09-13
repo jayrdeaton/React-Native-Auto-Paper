@@ -1,5 +1,3 @@
-import { useContext } from 'react'
+import { useThemeSettingsInternal } from './ThemeSettingsContext'
 
-import { ThemeSettingsContext } from './ThemeSettingsContext'
-
-export const useThemeSettings = () => useContext(ThemeSettingsContext)
+export const useThemeSettings = useThemeSettingsInternal
