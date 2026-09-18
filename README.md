@@ -201,6 +201,26 @@ dispatch(themeActions.setColor('#e91e63'))
 dispatch(themeActions.setAppearance('dark'))
 ```
 
+The `App.tsx` example above hand-builds the `initialValue`/`onReady` prop pair inline. Once you also need `onChange` wired back to `dispatch`, reach for `useThemeBridgeProps` instead of re-deriving that same three-field object by hand: it takes your already-resolved `settings`/`onChange`/`onReady` and reshapes them into the exact, memoized prop bag `Provider` expects.
+
+```tsx
+// Theme.tsx
+import { Provider as AutoPaperProvider, useThemeBridgeProps } from '@rific/auto-paper'
+import { useCallback } from 'react'
+import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+
+export function Theme({ children }: { children: React.ReactNode }) {
+  const settings = useSelector((state: RootState) => state.theme, shallowEqual)
+  const dispatch = useDispatch()
+  const onChange = useCallback((next: ThemeSettings) => dispatch(themeActions.initialize(next)), [dispatch])
+  const bridgeProps = useThemeBridgeProps({ initialValue: settings, onChange, onReady: SplashScreen.hideAsync })
+
+  return <AutoPaperProvider {...bridgeProps}>{children}</AutoPaperProvider>
+}
+```
+
+Keep the scope honest: this only replaces the final `<Provider initialValue={...} onChange={...} onReady={...}>` prop list with `<Provider {...bridgeProps}>`. It doesn't do the `useSelector`/`useDispatch` wiring above it — that's still yours to write, since `RootState`'s shape is app-local and this package has no opinion on it (or on state management being Redux at all; `useThemeBridgeProps` takes plain values and callbacks, not a `dispatch` function).
+
 ### With `useComputedTheme`
 
 Use the hook directly when you need to extend the theme before passing it to `PaperProvider`, for example to merge in a navigation theme or add custom color keys:
@@ -261,6 +281,21 @@ export default function App() {
 | `harmony` | `ColorHarmony` | `'split-complementary'` (ignored when `color` is a `TriadicPalette`) |
 | `blur` | `boolean` | `true` |
 | `blurTint` | `number` | `0.2` |
+
+### `useThemeBridgeProps({ initialValue, onChange, onReady })`
+
+Reshapes already-resolved values into the exact `Pick<ProviderProps, 'initialValue' | 'onChange' | 'onReady'>` shape `Provider` expects, memoized on those three fields so the returned object is referentially stable across re-renders until an input actually changes. Meant for a consuming app's own Redux-backed "Theme" component — see "With Redux" above — but takes plain values and callbacks rather than a `dispatch` function or anything Redux-specific, so it works with any state management, or none.
+
+It only replaces the final prop list handed to `Provider`; it does not do any `useSelector`/`dispatch` wiring itself, and `onReady` is threaded through unchanged.
+
+```ts
+import { useThemeBridgeProps } from '@rific/auto-paper'
+
+const bridgeProps = useThemeBridgeProps({ initialValue: settings, onChange, onReady })
+// → { initialValue, onChange, onReady }
+
+<Provider {...bridgeProps}>{children}</Provider>
+```
 
 ### `useThemeSettings()`
 
