@@ -35,6 +35,8 @@ export { defaultThemeSettings, ThemeSettingsContext } from './ThemeSettingsConte
 export type { AutoPaperTheme, SemanticColorRoles, ThemeAppearance } from './useComputedTheme'
 export { SEMANTIC_BASE_COLORS, useComputedTheme } from './useComputedTheme'
 export { useAutoPaperTheme } from './useTheme'
+export type { ThemeBridgeProps } from './useThemeBridgeProps'
+export { useThemeBridgeProps } from './useThemeBridgeProps'
 export { useThemeSettings } from './useThemeSettings'
 export { getBlendedColor } from './utils/getBlendedColor'
 export type { ColorRoles } from './utils/getColorRoles'
