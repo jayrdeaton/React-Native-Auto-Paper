@@ -201,6 +201,8 @@ dispatch(themeActions.setColor('#e91e63'))
 dispatch(themeActions.setAppearance('dark'))
 ```
 
+Dispatching `themeActions` from anywhere in the app reaches the Provider because `initialValue` is live after mount: the Provider adopts any value that changes. That needs @rific/core 0.3.0 or later. With @rific/core 0.2.1 or older, `initialValue` is only read at mount, so write through the Provider's own setters instead.
+
 The `App.tsx` example above hand-builds the `initialValue`/`onReady` prop pair inline. Once you also need `onChange` wired back to `dispatch`, reach for `useThemeBridgeProps` instead of re-deriving that same three-field object by hand: it takes your already-resolved `settings`/`onChange`/`onReady` and reshapes them into the exact, memoized prop bag `Provider` expects.
 
 ```tsx
