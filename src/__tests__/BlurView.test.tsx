@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { Appearance, View } from 'react-native'
+import { Appearance, Platform, View } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, useTheme } from 'react-native-paper'
 
 import type { ExpoBlurModule } from '../components/BlurView'
@@ -153,5 +153,89 @@ describe('BlurView', () => {
       </Provider>
     )
     expect(mockExpoBlurView.mock.calls[0][0].tint).toBe('dark')
+  })
+
+  // expo-blur on Android only really blurs with both a blurTarget and a non-'none' blurMethod;
+  // otherwise it paints its tint as a flat translucent fill with the screen showing through
+  // unblurred, so BlurView renders its solid look instead.
+  describe('on Android', () => {
+    // The shared react-native mock's Platform is a plain object, so these tests set OS/Version on it directly.
+    const mockPlatform = Platform as { OS: string; Version?: number }
+    const blurTarget = { current: null }
+
+    beforeEach(() => {
+      mockPlatform.OS = 'android'
+      mockPlatform.Version = 34
+    })
+
+    afterEach(() => {
+      mockPlatform.OS = 'ios'
+      delete mockPlatform.Version
+    })
+
+    const renderBlurView = (props: Partial<Parameters<typeof BlurView>[0]> = {}) =>
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView {...props}>content</BlurView>
+        </Provider>
+      )
+
+    it('renders the solid fallback without a blurTarget', () => {
+      renderBlurView({ blurMethod: 'dimezisBlurView' })
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+      expect(screen.getByText('content')).toBeTruthy()
+    })
+
+    it("renders the solid fallback with a blurTarget but no blurMethod, since expo-blur's defaults to 'none'", () => {
+      renderBlurView({ blurTarget })
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+    })
+
+    it("renders the solid fallback with blurMethod 'none'", () => {
+      renderBlurView({ blurMethod: 'none', blurTarget })
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+    })
+
+    it("blurs with a blurTarget and blurMethod 'dimezisBlurView', forwarding both", () => {
+      renderBlurView({ blurMethod: 'dimezisBlurView', blurTarget })
+      expect(screen.getByTestId('expo-blur-view')).toBeTruthy()
+      expect(mockExpoBlurView.mock.calls[0][0]).toEqual(expect.objectContaining({ blurMethod: 'dimezisBlurView', blurTarget }))
+    })
+
+    it("blurs with 'dimezisBlurViewSdk31Plus' on API 31+", () => {
+      renderBlurView({ blurMethod: 'dimezisBlurViewSdk31Plus', blurTarget })
+      expect(screen.getByTestId('expo-blur-view')).toBeTruthy()
+    })
+
+    it("renders the solid fallback with 'dimezisBlurViewSdk31Plus' below API 31, where expo-blur skips the blur", () => {
+      mockPlatform.Version = 30
+      renderBlurView({ blurMethod: 'dimezisBlurViewSdk31Plus', blurTarget })
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+    })
+
+    it('accepts the deprecated experimentalBlurMethod as the blur method', () => {
+      renderBlurView({ blurTarget, experimentalBlurMethod: 'dimezisBlurView' })
+      expect(screen.getByTestId('expo-blur-view')).toBeTruthy()
+    })
+
+    it('still renders the solid fallback when blur={false}, even with a working blurTarget/blurMethod', () => {
+      renderBlurView({ blur: false, blurMethod: 'dimezisBlurView', blurTarget })
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+    })
+  })
+
+  it('still blurs on web without a blurTarget (backdrop-filter needs none)', () => {
+    const mockPlatform = Platform as { OS: string }
+    mockPlatform.OS = 'web'
+    try {
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView>content</BlurView>
+        </Provider>
+      )
+      expect(screen.getByTestId('expo-blur-view')).toBeTruthy()
+    } finally {
+      mockPlatform.OS = 'ios'
+    }
   })
 })
