@@ -107,4 +107,7 @@ export const Dialog = Object.assign(
   }
 )
 
-export const Portal = jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)
+export const Portal = Object.assign(
+  jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null),
+  { Host: jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null) }
+)
