@@ -13,7 +13,7 @@ Part of the `@rific` package ecosystem. Published at https://www.npmjs.com/packa
 ```bash
 npm run build       # tsup, outputs CJS + ESM + types to dist/
 npm run check       # TypeScript type check (tsc --noEmit)
-npm test            # Jest (166 tests)
+npm test            # Jest (305 tests)
 npm run test:watch  # Jest in watch mode
 npm run build       # Full build via tsup
 ```
@@ -94,6 +94,13 @@ src/
 
 ## Design Notes
 
+**2026-10-03 — `Provider` renders its own nested `Portal.Host` (released in 0.12.2).** Found by the Expo-Starter review: the auto-paper demo's Dialog said "Blur On" but rendered a solid surface. `PaperProvider` wraps its subtree in a `PortalHost`, and that host's `PortalManager` renders every `<Portal>`'s content as a sibling of the host's own children, so portal content only sees contexts provided *above* the host; Paper's `Portal` re-provides only its own theme and settings. `ThemeProviderBody` provides `PaperDefaultsContext`, `NavBarContext`, `BlurModuleContext` and `ReanimatedModuleContext` *inside* `PaperProvider`, so everything portaled under `Provider` lost all four. `Dialog` (which portals its own surface) and Paper's `Menu` (which portals its children) never saw the injected `expoBlur` and always rendered `BlurView`'s solid fallback, and `usePaperDefaults()` returned `{}` inside any portal.
+
+- **Fix: a `<Portal.Host>` nested inside all four contexts, wrapping the styled children `View`.** Every `Portal` resolves the *nearest* host through `PortalContext`, so this host now catches all of them and their content mounts inside every auto-paper context. Paper's outer host stays permanently empty (only `StatusBar`, which renders null, sits between the two). It wraps the styled `View` rather than sitting inside it, so a consumer's `style` (padding, margin, transform, `overflow: 'hidden'`) can never inset or clip a Dialog backdrop or Menu layer. Checked against Paper 5.15.3's source: the portal layer keeps the same origin and size as before (so `Menu`/`Tooltip`'s `measureInWindow`-based positioning is unchanged), stacking order is unchanged, and the host never remounts after the theme first resolves.
+- **Contexts an app provides *inside* `Provider` are still invisible to portal content** (Expo-Starter's `ToastProvider`, for one). That's inherent to Paper's portal design, not something this package can fix from above; the README tells apps to render another `<Portal.Host>` below such providers if they need them inside dialogs.
+- **Android: `BlurView` now falls back to its solid look unless expo-blur would really blur (same day, at the author's direction).** Getting `expoBlur` into portaled surfaces exposed what every `BlurView` already did on Android: expo-blur there only blurs with both a `blurTarget` and a non-`'none'` `blurMethod` (`'dimezisBlurView'`, or `'dimezisBlurViewSdk31Plus'` on API 31+; `blurMethod` defaults to `'none'`, see `ExpoBlurView.kt`'s `safeMethod`). Without them it paints its tint at roughly 0.35–0.39 alpha, plus `BlurView`'s own surface overlay at `blurTint` (default 0.2): about 50% opacity with the screen showing through unblurred. Nothing in this package or the fleet passes a `blurTarget`, so scroll-view chrome, `blur: true` drawers, and now Dialog/Menu all looked like that. `BlurView` now checks exactly expo-blur's own condition (`blursOnAndroid` in `BlurView.tsx`) and renders the same solid surface `blur={false}` gives otherwise; iOS and web are untouched (they need no target). It checks the `blurTarget` ref object, not `.current`, matching expo-blur's own JS: the target view usually commits after `BlurView` renders. Covered by `BlurView.test.tsx`'s "on Android" block, which fails against the pre-change code. Dialog and Menu don't forward `blurTarget`/`blurMethod`, so on Android they're always solid now. Released in 0.12.2 after verification on web (Expo-Starter, yalc-linked) and in unit tests; not yet checked on an Android or iOS device.
+- `src/__tests__/Portal.test.tsx` (5 tests) uses a local portal mock faithful to Paper's real mechanics, and fails against the pre-fix code. Mutation-checked: moving the host outside any of the four contexts, inside the styled `View`, or rendering it only when a module is injected each fail at least one test.
+
 **2026-09-18 — `useThemeBridgeProps`, extracted from the fleet's five duplicate `Theme.tsx` files.** New `src/useThemeBridgeProps.ts` + `ThemeBridgeProps` type, exported from `index.ts`. Landed on `main` alongside the version bump to 0.11.1 in `package.json`, but not yet tagged/published as of this writing — no `v0.11.1` tag exists yet (see Release above for the tag-based flow this still has to go through).
 
 - **Lives here, not in `@rific/core`.** `@rific/core`'s `createSettingsContext`/`createSettingsSlice`/`createModuleConfig` are the fleet's genuinely generic, feature-agnostic factories with zero knowledge of any concrete settings shape. `initialValue`/`onChange`/`onReady` are `ProviderProps`' own field names (`ThemeProvider.tsx`) and are meaningless outside this package, so the bridge hook belongs next to `Provider` — exactly where `@rific/feedback-press` keeps its own analogous `useFeedbackBridgeProps` next to `FeedbackPressProvider`, not inside `@rific/core`. This package is the one "home" for it, not a new shared package of its own.
@@ -107,7 +114,7 @@ src/
 
 - `react-native` (required)
 - `react-native-paper` (required)
-- `expo-blur` (optional, frosted-glass `BlurView`; without it, `BlurView` renders its solid fallback)
+- `expo-blur` (optional, frosted-glass `BlurView`; without it, `BlurView` renders its solid fallback, as it also does on Android unless given a `blurTarget` plus a `blurMethod`)
 - `expo-navigation-bar` (optional, >= 56.0.0, auto-syncs the Android nav bar icon style when `BottomNavigation` is mounted)
 
 Both optional peers are loaded via a `try { require(...) } catch { return null }` guard (see `src/navigation-bar.ts` and `src/components/BlurView.tsx`), with a local mirrored type shape for each instead of importing the peer's real types, so consumers who never installed the optional peer aren't forced to resolve it, at runtime or in the type checker.
@@ -117,7 +124,8 @@ Both optional peers are loaded via a `try { require(...) } catch { return null }
 - Framework: Jest + ts-jest, jsdom environment
 - Mocks in `src/__mocks__/` for `react-native`, `react-native-paper`
 - Tests in `src/__tests__/`: utils tested individually, components/hooks tested with `@testing-library/react`
-- 166 tests across 21 suites
+- 305 tests across 37 suites
+- `src/__tests__/Portal.test.tsx` overrides the shared react-native-paper mock locally with one that reproduces Paper's real portal mechanics (content renders at the nearest `PortalHost`, outside any contexts in between; `PaperProvider` wraps its subtree in a host). The shared mock's `Portal`/`Portal.Host` are plain passthroughs, which would hide portal bugs entirely: test anything portal-related there, not against the shared mock.
 
 ## Code Style
 

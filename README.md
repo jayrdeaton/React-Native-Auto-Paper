@@ -265,7 +265,7 @@ export default function App() {
 | `onChange` | `(settings: ThemeSettings) => void` | Called whenever settings change via `useThemeSettings().set()` |
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
-| `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. |
+| `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. On Android, expo-blur only blurs when given a `blurTarget` and a `blurMethod` (`'dimezisBlurView'`, or `'dimezisBlurViewSdk31Plus'` on API 31+); without both, `<BlurView>` renders the solid fallback there too, rather than expo-blur's unblurred translucent tint. |
 | `fontFamily` | `string` | Applied to every Paper typography variant (`bodyLarge`, `headlineMedium`, `labelSmall`, ...) via `configureFonts`'s flat-config mode — each variant keeps its own MD3 fontSize/lineHeight/weight, only fontFamily changes. Omit to keep each platform's system font. |
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
@@ -273,6 +273,8 @@ export default function App() {
 | `reanimated` | `ReanimatedModule` | Injects `react-native-reanimated` (for example `import Reanimated from 'react-native-reanimated'`) so `<Dialog animatedStyle={...}>` can animate its card on the UI thread. Omit to keep `animatedStyle` as a no-op. |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
+
+`Provider` also renders its own `Portal.Host`, nested inside everything it injects, so anything rendered through `react-native-paper`'s `Portal` (this package's `Dialog`, Paper's `Menu` and `Tooltip`, or a `Modal`/`Snackbar`/anything else you wrap in `<Portal>` yourself) still sees `expoBlur`, `reanimated` and `defaults`. Paper's own host sits above all of those and its `Portal` only carries the theme across, so without this a portaled `Dialog` or `Menu` would silently render its solid fallback. Contexts your app provides *inside* `Provider` (a toast provider, say) are a separate matter: portal content can't see them unless you render another `<Portal.Host>` below them.
 
 `ThemeSettings` fields:
 
