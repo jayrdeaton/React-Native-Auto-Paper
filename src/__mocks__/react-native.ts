@@ -28,7 +28,11 @@ export const Animated = {
   timing: jest.fn(() => ({
     start: jest.fn((cb?: (result: { finished: boolean }) => void) => cb && cb({ finished: true }))
   })),
-  View: jest.fn(stub)
+  View: jest.fn(stub),
+  multiply: jest.fn((a: unknown, b: unknown) => ({ __multiply: [a, b] })),
+  // Renders the wrapped component itself, so its mock still records the call, marked __animated so
+  // tests can tell an Animated wrapper apart from the plain component
+  createAnimatedComponent: (component: React.ComponentType<Record<string, unknown>>) => (props: Record<string, unknown>) => React.createElement(component, { ...props, __animated: true })
 }
 
 export const BackHandler = {
@@ -36,6 +40,7 @@ export const BackHandler = {
 }
 
 export const Easing = {
+  bezier: jest.fn(() => jest.fn()),
   out: jest.fn((fn: unknown) => fn),
   cubic: jest.fn()
 }

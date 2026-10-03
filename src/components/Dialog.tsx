@@ -1,5 +1,5 @@
 import React, { type ComponentType, type ReactNode, useEffect, useState } from 'react'
-import { Animated, BackHandler, Easing, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
+import { Animated, BackHandler, Easing, Platform, Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import { Dialog as PaperDialog, type DialogActionsProps, type DialogContentProps, type DialogProps as PaperDialogProps, type DialogScrollAreaProps, type DialogTitleProps, Portal, useTheme } from 'react-native-paper'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -38,6 +38,9 @@ const ANIMATION_DURATION = 220
 
 // Minimum breathing room between the card and the screen edge, clamped up from safe-area insets.
 const DIALOG_MARGIN = 32
+
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView)
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 function DialogComponent({ animatedStyle, blur: blurProp, dismissable = true, dismissableBackButton = dismissable, visible, onDismiss, children, style, testID = 'dialog' }: DialogProps) {
   const blur = useBlur(blurProp)
@@ -93,21 +96,34 @@ function DialogComponent({ animatedStyle, blur: blurProp, dismissable = true, di
 
   const borderRadius = (isV3 ? 7 : 1) * roundness
 
+  // On web, an ancestor below opacity 1 cuts the card's CSS backdrop-filter off from the page behind
+  // it, and Chromium doesn't restore the blur once that ancestor fades back up to 1, so fading the
+  // whole layer would leave the open card see-through. There the fade runs on the backdrop and on the
+  // card (the backdrop-filter element) itself instead, off the same value. A numeric opacity in the
+  // card's own style still applies there, multiplied into the fade.
+  const web = Platform.OS === 'web'
+  const fade = { opacity }
+  const styleOpacity = StyleSheet.flatten(style)?.opacity
+  const cardFade = typeof styleOpacity === 'number' ? { opacity: Animated.multiply(opacity, styleOpacity) } : fade
+  const Backdrop = web ? AnimatedPressable : Pressable
+  const Card = web ? AnimatedBlurView : BlurView
+  const card = (
+    <Card blur={blur} style={[styles.card, { borderRadius }, style, web && cardFade]} testID={`${testID}-surface`}>
+      {content}
+    </Card>
+  )
+
   return (
     <Portal>
-      <Animated.View accessibilityLiveRegion='polite' accessibilityViewIsModal pointerEvents={visible ? 'box-none' : 'none'} style={[StyleSheet.absoluteFill, { opacity }]} testID={testID}>
-        <Pressable accessibilityLabel='Close modal' accessibilityRole='button' disabled={!dismissable} onPress={dismissable ? onDismiss : undefined} style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }]} testID={`${testID}-backdrop`} />
+      <Animated.View accessibilityLiveRegion='polite' accessibilityViewIsModal pointerEvents={visible ? 'box-none' : 'none'} style={[StyleSheet.absoluteFill, !web && fade]} testID={testID}>
+        <Backdrop accessibilityLabel='Close modal' accessibilityRole='button' disabled={!dismissable} onPress={dismissable ? onDismiss : undefined} style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }, web && fade]} testID={`${testID}-backdrop`} />
         <View pointerEvents='box-none' style={[styles.wrapper, { marginBottom: bottom, marginTop: top, paddingHorizontal: Math.max(left, right, DIALOG_MARGIN) }]} testID={`${testID}-wrapper`}>
           {reanimated && animatedStyle ? (
             <reanimated.View style={animatedStyle} testID={`${testID}-animated-wrapper`}>
-              <BlurView blur={blur} style={[styles.card, { borderRadius }, style]} testID={`${testID}-surface`}>
-                {content}
-              </BlurView>
+              {card}
             </reanimated.View>
           ) : (
-            <BlurView blur={blur} style={[styles.card, { borderRadius }, style]} testID={`${testID}-surface`}>
-              {content}
-            </BlurView>
+            card
           )}
         </View>
       </Animated.View>
