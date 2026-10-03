@@ -1,5 +1,5 @@
 import { type ComponentType, type ReactNode, type RefObject, useContext } from 'react'
-import { type StyleProp, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native'
+import { Platform, type StyleProp, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native'
 import { useTheme } from 'react-native-paper'
 
 import { useBlurModule } from '../ThemeProvider'
@@ -33,6 +33,18 @@ type ExpoBlurViewProps = {
   tint?: ExpoBlurTint
 } & ViewProps
 
+// On Android, expo-blur only really blurs when it has both a blurTarget and a blur method
+// ('dimezisBlurView', or 'dimezisBlurViewSdk31Plus' on API 31+); blurMethod defaults to 'none'.
+// Otherwise it paints its tint as a flat translucent fill (roughly 0.35-0.39 alpha at the default
+// intensity) with the screen showing through unblurred, so BlurView renders its solid look instead.
+// Checks the blurTarget ref object, not its .current, same as expo-blur's own JS: the target view
+// usually commits after this render, so .current is still null here even when wired correctly.
+const blursOnAndroid = ({ blurMethod, blurTarget, experimentalBlurMethod }: ExpoBlurViewProps) => {
+  const method = blurMethod ?? experimentalBlurMethod ?? 'none'
+  if (!blurTarget || method === 'none') return false
+  return method === 'dimezisBlurView' || Number(Platform.Version) >= 31
+}
+
 const ELEVATION_OPACITY: Record<number, number> = { 0: 0, 1: 0.05, 2: 0.08, 3: 0.11, 4: 0.12, 5: 0.14 }
 const VARIANT_TINT_OPACITY = { light: 0.12, dark: 0.18 }
 
@@ -55,7 +67,7 @@ export const BlurView = ({ blur = true, children, elevation, style, tintColor, t
   const resolvedTintColor = tintColor ?? variantColor ?? (elevation !== undefined ? colors.primary : undefined)
   const resolvedTintOpacity = tintOpacity ?? (tintColor ? (dark ? 0.24 : 0.16) : variantColor ? (dark ? VARIANT_TINT_OPACITY.dark : VARIANT_TINT_OPACITY.light) : elevation !== undefined ? ELEVATION_OPACITY[elevation] : 0)
   const tint = resolvedTintColor && resolvedTintOpacity > 0 ? <View style={[StyleSheet.absoluteFill, { backgroundColor: resolvedTintColor, opacity: resolvedTintOpacity }]} /> : null
-  if (blur && expoBlur)
+  if (blur && expoBlur && (Platform.OS !== 'android' || blursOnAndroid(props)))
     return (
       <expoBlur.BlurView {...props} tint={dark ? 'dark' : 'light'} style={style}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: surfaceColor, opacity: settings.blurTint }]} />
