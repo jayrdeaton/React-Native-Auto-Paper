@@ -1,6 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef } from 'react'
 import { StatusBar, type StatusBarProps, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import { configureFonts, Provider as PaperProvider } from 'react-native-paper'
+import { configureFonts, Portal, Provider as PaperProvider } from 'react-native-paper'
 
 import type { ExpoBlurModule } from './components/BlurView'
 import type { ReanimatedModule } from './components/Dialog'
@@ -99,7 +99,17 @@ function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, navigatio
         <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
           <BlurModuleContext.Provider value={expoBlur}>
             <ReanimatedModuleContext.Provider value={reanimated}>
-              <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+              {/* PaperProvider's own PortalHost sits above every context provided here, and Paper's
+                  Portal only carries its theme and settings across, so anything rendered through a
+                  Portal (this package's Dialog, Paper's Menu and Tooltip, or anything an app wraps
+                  in <Portal> itself) would otherwise lose expoBlur, reanimated, defaults and the nav
+                  bar hooks: Dialog/Menu's blur silently fell back to solid. This nested host is the
+                  nearest one for every Portal under Provider, so their content mounts inside all of
+                  these contexts instead. It wraps the styled View, not the other way round, so
+                  portals still cover the full area regardless of `style`. */}
+              <Portal.Host>
+                <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+              </Portal.Host>
             </ReanimatedModuleContext.Provider>
           </BlurModuleContext.Provider>
         </NavBarContext.Provider>
