@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react'
-import { Animated, Appearance, BackHandler, Pressable, View } from 'react-native'
+import { Animated, Appearance, BackHandler, Platform, Pressable, View } from 'react-native'
 import { Dialog as PaperDialog, MD3LightTheme, Portal, useTheme } from 'react-native-paper'
 
 // react-native-safe-area-context is a real installed dependency (not aliased via
@@ -319,6 +319,65 @@ describe('Dialog', () => {
 
       expect(screen.queryByTestId('dialog-animated-wrapper')).toBeNull()
       expect(screen.getByText('content')).toBeTruthy()
+    })
+  })
+
+  // On web, an ancestor below opacity 1 cuts the card's CSS backdrop-filter off from the page, and
+  // Chromium doesn't restore it once that ancestor is back at 1, so there the fade can't sit on the
+  // layer wrapping the card.
+  describe('fade placement', () => {
+    // The shared react-native mock's Platform is a plain object, so these tests set OS on it directly.
+    const mockPlatform = Platform as { OS: string }
+    afterEach(() => {
+      mockPlatform.OS = 'ios'
+    })
+
+    // The shared StyleSheet mock's flatten is the identity, so nested/falsy style arrays are merged here
+    const flatten = (style: unknown): Record<string, unknown> => (Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : ((style as Record<string, unknown>) ?? {}))
+    const propsOf = (mock: jest.Mock, testID: string) => mock.mock.calls.find(([props]) => props.testID === testID)?.[0]
+    const opacityOf = (mock: jest.Mock, testID: string) => flatten(propsOf(mock, testID).style).opacity
+
+    const renderDialog = () => {
+      render(
+        <Dialog visible onDismiss={jest.fn()}>
+          content
+        </Dialog>
+      )
+      return (Animated.Value as unknown as jest.Mock).mock.results[0].value
+    }
+
+    it('fades the whole layer on native, leaving the backdrop and card unfaded', () => {
+      const opacity = renderDialog()
+      expect(opacity).toBeDefined()
+      expect(opacityOf(mockAnimatedView, 'dialog')).toBe(opacity)
+      expect(opacityOf(mockPressable, 'dialog-backdrop')).toBeUndefined()
+      expect(opacityOf(mockView, 'dialog-surface')).toBeUndefined()
+      expect(propsOf(mockPressable, 'dialog-backdrop').__animated).toBeUndefined()
+      expect(propsOf(mockView, 'dialog-surface').__animated).toBeUndefined()
+    })
+
+    it('on web, fades the backdrop and the card (the backdrop-filter element) instead, off the same value', () => {
+      mockPlatform.OS = 'web'
+      const opacity = renderDialog()
+      expect(opacity).toBeDefined()
+      expect(opacityOf(mockAnimatedView, 'dialog')).toBeUndefined()
+      expect(opacityOf(mockPressable, 'dialog-backdrop')).toBe(opacity)
+      expect(opacityOf(mockView, 'dialog-surface')).toBe(opacity)
+      expect(propsOf(mockPressable, 'dialog-backdrop').__animated).toBe(true)
+      expect(propsOf(mockView, 'dialog-surface').__animated).toBe(true)
+    })
+
+    it("on web, keeps a numeric opacity from the card's own style by multiplying it into the fade", () => {
+      mockPlatform.OS = 'web'
+      const halfOpaque = { opacity: 0.5 }
+      render(
+        <Dialog style={halfOpaque} visible onDismiss={jest.fn()}>
+          content
+        </Dialog>
+      )
+      const opacity = (Animated.Value as unknown as jest.Mock).mock.results[0].value
+      expect(opacityOf(mockView, 'dialog-surface')).toEqual({ __multiply: [opacity, 0.5] })
+      expect(opacityOf(mockPressable, 'dialog-backdrop')).toBe(opacity)
     })
   })
 

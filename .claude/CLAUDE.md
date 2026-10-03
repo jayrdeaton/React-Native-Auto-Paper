@@ -13,7 +13,7 @@ Part of the `@rific` package ecosystem. Published at https://www.npmjs.com/packa
 ```bash
 npm run build       # tsup, outputs CJS + ESM + types to dist/
 npm run check       # TypeScript type check (tsc --noEmit)
-npm test            # Jest (305 tests)
+npm test            # Jest (316 tests)
 npm run test:watch  # Jest in watch mode
 npm run build       # Full build via tsup
 ```
@@ -94,6 +94,18 @@ src/
 
 ## Design Notes
 
+**2026-10-03 — On web, `Menu` and `Dialog` no longer fade an ancestor of their blur (released in 0.12.3).** Found in CashierFu-Utility (whose own `Menu` wraps Paper's the same way): a menu opened see-through and unblurred, and stayed that way until hovering it. expo-blur's web `BlurView` is a `<div>` with CSS `backdrop-filter`. Any ancestor below opacity 1 becomes its backdrop root, so while Paper's Menu fades its Surface (and while `Dialog` faded the `Animated.View` wrapping its card), the blur only sees that ancestor's own empty content: correct per spec, and see-through for the whole fade. Chromium also doesn't recompute the backdrop root when the ancestor's opacity returns to exactly 1, so the surface *stays* see-through until something forces a repaint.
+
+- **`Dialog` was broken outright on 0.12.2's web build** (Expo-Starter's demo: a "Blur On" card with the page sharp behind it, indefinitely). **`Menu` was mostly masked:** Paper `focus()`es the first focusable item when its open animation ends, and that repaint happens to restore the blur. A menu with nothing focusable stays see-through (Utility's sort menu), and every menu is unblurred during its 250ms fades.
+- **Fix, web only (native renders exactly the tree it did before).** Opacity on the `backdrop-filter` element itself fades the blurred result correctly, with no stale state, so the fade moves there:
+  - `Dialog` moves its existing opacity value off the outer layer onto the backdrop and the card (an animated `BlurView`). A numeric `style.opacity` on the card is multiplied into the fade, not overridden.
+  - `Menu` pins Paper's Surface at `opacity: 1` with `shadowOpacity: 0` through `contentStyle`, and wraps its children in `FadingBlurView`. That runs Paper Menu's fades on `BlurView` (250ms × `animation.scale`, `bezier(0.4, 0, 0.2, 1)`, timed from the `theme` prop like Paper's) and draws the Surface's MD3 shadow (Paper's per-elevation table, `elevation` prop, none in `flat` mode) and corner radius on `BlurView`, so content and shadow still fade together. A close is final: once Paper starts hiding, it always unmounts the content when that fade-out ends or is interrupted (`hide()`'s callback ignores `finished`), even if `visible` turns back on first, so fading back in would only end in a pop.
+  - Because everything visible starts at opacity 0, this also covers Paper's stale pre-measurement frame on re-opens (`hide()` resets neither the scale nor `left`/`top`), which Paper's own Surface opacity used to hide. The one leftover is `animation.scale` 0, where the fade completes at mount and a re-open can paint one frame at the previous position.
+- **Verified in Expo-Starter (yalc-linked), web.** Sampled every frame: the ancestor stays at 1, and the blur fades 0 → 1 and is live from the first frame after opening.
+- **Web resolves `dist/`, not `src/`.** Metro's web build doesn't use the `"react-native"` export condition, so a yalc-linked web test needs a fresh `npm run build` (which `yalc publish` runs via `prepublishOnly`).
+- Unrelated, pre-existing, not fixed: Paper 5.15.3's Menu gets stuck closed if `visible` goes back to true before its close animation ends. `prevRendered` is still true, so `show()` is skipped, then the close unmounts the content while `visible` stays true, and Paper only listens for Escape while shown. This lives entirely in Paper's `visible`/`rendered`/`prevRendered` logic.
+- Tests: `Menu.test.tsx` (native vs web `contentStyle`, the fade in/out, shadow per elevation/mode, the final close, the `theme` prop) and `Dialog.test.tsx`'s "fade placement" block. They fail against both the pre-change components and a first pass that didn't move the shadow, close, or theme handling. The shared react-native mock's `Animated.createAnimatedComponent` now marks what it wraps with `__animated` (so dropping a wrapper fails the web tests instead of silently killing the fade on web), plus `Animated.multiply` and `Easing.bezier`.
+
 **2026-10-03 — `Provider` renders its own nested `Portal.Host` (released in 0.12.2).** Found by the Expo-Starter review: the auto-paper demo's Dialog said "Blur On" but rendered a solid surface. `PaperProvider` wraps its subtree in a `PortalHost`, and that host's `PortalManager` renders every `<Portal>`'s content as a sibling of the host's own children, so portal content only sees contexts provided *above* the host; Paper's `Portal` re-provides only its own theme and settings. `ThemeProviderBody` provides `PaperDefaultsContext`, `NavBarContext`, `BlurModuleContext` and `ReanimatedModuleContext` *inside* `PaperProvider`, so everything portaled under `Provider` lost all four. `Dialog` (which portals its own surface) and Paper's `Menu` (which portals its children) never saw the injected `expoBlur` and always rendered `BlurView`'s solid fallback, and `usePaperDefaults()` returned `{}` inside any portal.
 
 - **Fix: a `<Portal.Host>` nested inside all four contexts, wrapping the styled children `View`.** Every `Portal` resolves the *nearest* host through `PortalContext`, so this host now catches all of them and their content mounts inside every auto-paper context. Paper's outer host stays permanently empty (only `StatusBar`, which renders null, sits between the two). It wraps the styled `View` rather than sitting inside it, so a consumer's `style` (padding, margin, transform, `overflow: 'hidden'`) can never inset or clip a Dialog backdrop or Menu layer. Checked against Paper 5.15.3's source: the portal layer keeps the same origin and size as before (so `Menu`/`Tooltip`'s `measureInWindow`-based positioning is unchanged), stacking order is unchanged, and the host never remounts after the theme first resolves.
@@ -124,7 +136,7 @@ Both optional peers are loaded via a `try { require(...) } catch { return null }
 - Framework: Jest + ts-jest, jsdom environment
 - Mocks in `src/__mocks__/` for `react-native`, `react-native-paper`
 - Tests in `src/__tests__/`: utils tested individually, components/hooks tested with `@testing-library/react`
-- 305 tests across 37 suites
+- 316 tests across 37 suites
 - `src/__tests__/Portal.test.tsx` overrides the shared react-native-paper mock locally with one that reproduces Paper's real portal mechanics (content renders at the nearest `PortalHost`, outside any contexts in between; `PaperProvider` wraps its subtree in a host). The shared mock's `Portal`/`Portal.Host` are plain passthroughs, which would hide portal bugs entirely: test anything portal-related there, not against the shared mock.
 
 ## Code Style
