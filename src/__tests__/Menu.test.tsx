@@ -5,8 +5,8 @@ import { Menu as PaperMenu, useTheme } from 'react-native-paper'
 import { Menu } from '../components/Menu'
 import { defaultThemeSettings, ThemeSettingsContext } from '../ThemeSettingsContext'
 
-// This suite is about Menu's own logic (contentStyle assembly, blur resolution) — not BlurView's
-// own rendering — so BlurView is stubbed out locally, same "mock what this suite doesn't own"
+// This suite is about Menu's own logic (contentStyle assembly, blur resolution) - not BlurView's
+// own rendering - so BlurView is stubbed out locally, same "mock what this suite doesn't own"
 // pattern as ColorPicker.test.tsx's Dialog mock.
 jest.mock('../components/BlurView', () => ({
   BlurView: jest.fn(({ children }: { children?: React.ReactNode }) => children ?? null)

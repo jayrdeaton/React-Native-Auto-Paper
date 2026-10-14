@@ -28,7 +28,7 @@ describe('AutoAppearancePicker', () => {
     const set = jest.fn()
     renderWithSettings('system', set)
 
-    // Same single-value overload as AppearancePicker.test.tsx's own cast — AutoAppearancePicker
+    // Same single-value overload as AppearancePicker.test.tsx's own cast - AutoAppearancePicker
     // never sets multiSelect either.
     const onValueChange = mockSegmentedButtons.mock.calls[0][0].onValueChange as (value: string) => void
     onValueChange('light')

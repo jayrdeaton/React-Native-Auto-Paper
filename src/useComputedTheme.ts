@@ -29,7 +29,7 @@ export type ThemeAppearance = 'system' | 'light' | 'dark'
 // HelperText, Badge) read theme.colors.error/onError directly, so a consumer that wants a
 // getColorRoles-derived "high severity" color without changing what those components render needs
 // its own name. #B00020 already clears WCAG AA for both onDanger-vs-danger (6.16:1) and
-// dangerContainer/onDangerContainer (12–17:1 across modes), verified the same way as warning's
+// dangerContainer/onDangerContainer (12-17:1 across modes), verified the same way as warning's
 // base above.
 export const SEMANTIC_BASE_COLORS = {
   success: '#2E7D32',

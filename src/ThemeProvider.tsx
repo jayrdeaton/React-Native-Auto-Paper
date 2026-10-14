@@ -30,7 +30,7 @@ export type ProviderProps = {
   /** Injects expo-blur for `<BlurView>`. Pass `import * as ExpoBlur from 'expo-blur'`; omit to always render BlurView's solid fallback. */
   expoBlur?: ExpoBlurModule
   /** Applied to every Paper typography variant (bodyLarge, headlineMedium, labelSmall, ...) via
-   * `configureFonts`'s flat-config mode — each variant keeps its own MD3 fontSize/lineHeight/weight,
+   * `configureFonts`'s flat-config mode - each variant keeps its own MD3 fontSize/lineHeight/weight,
    * only fontFamily changes. The one-line way to reskin an app's whole text to a custom typeface,
    * instead of passing `fontFamily` to every individual Text/TextInput/Button across the app. Omit
    * to keep each platform's system font (MD3's own default). */
@@ -48,7 +48,7 @@ export type ProviderProps = {
 }
 
 // createSettingsContext's generated Provider only exposes `settings` to descendants (via its
-// generated useSettings()) — it can't itself also compute the theme/gate mounting on it being
+// generated useSettings()) - it can't itself also compute the theme/gate mounting on it being
 // ready, since that logic needs `settings` in scope. Provider (below) is just this thin outer
 // wrapper for the settings half; ThemeProviderBody (an actual descendant, reached via
 // useThemeSettingsInternal()) does all the theme-computation/gating work the single combined
@@ -71,7 +71,7 @@ function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, navigatio
   const { settings } = useThemeSettingsInternal()
 
   const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
-  // Layered on top of useComputedTheme's own output rather than folded into it — that hook only
+  // Layered on top of useComputedTheme's own output rather than folded into it - that hook only
   // ever recomputes for a color/appearance/harmony change, and fontFamily is a completely
   // independent axis; merging it there would mean either re-running the whole color computation on
   // every fontFamily change (wasteful) or threading fontFamily through as a fourth computeTheme

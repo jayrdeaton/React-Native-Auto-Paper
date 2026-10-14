@@ -1,7 +1,7 @@
 import { getHex } from './getHex'
 import { getRgb } from './getRgb'
 
-// Returns the color with lightness clamped to the given target (0–1), preserving hue and saturation.
+// Returns the color with lightness clamped to the given target (0-1), preserving hue and saturation.
 export const getTonalColor = (color: string, lightness: number): string => {
   const rgb = getRgb(color)
   if (!rgb) return color

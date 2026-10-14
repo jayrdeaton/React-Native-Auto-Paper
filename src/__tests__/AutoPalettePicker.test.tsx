@@ -44,7 +44,7 @@ describe('AutoPalettePicker', () => {
     openDialog()
 
     // Same "check mark only on the selected swatch" proof PalettePicker.test.tsx's own test
-    // uses — this only lands on defaultColors[3] if the seed actually reached PalettePicker.
+    // uses - this only lands on defaultColors[3] if the seed actually reached PalettePicker.
     const checkCalls = mockIcon.mock.calls.filter(([props]) => props.source === 'check')
     expect(checkCalls).toHaveLength(1)
     expect(checkCalls[0][0].color).toBe(getContrastColor(selected))
@@ -57,7 +57,7 @@ describe('AutoPalettePicker', () => {
 
     // If the raw TriadicPalette object had leaked through unresolved instead of narrowing to
     // `.primary`, no swatch's hex would ever === that object, and no check mark would render at
-    // all — this only passes because the narrowed string actually reached PalettePicker.
+    // all - this only passes because the narrowed string actually reached PalettePicker.
     const checkCalls = mockIcon.mock.calls.filter(([props]) => props.source === 'check')
     expect(checkCalls).toHaveLength(1)
     expect(checkCalls[0][0].color).toBe(getContrastColor(primary))

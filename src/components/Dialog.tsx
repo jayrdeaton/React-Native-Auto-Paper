@@ -7,11 +7,11 @@ import { useBlur } from '../BlurContext'
 import { useReanimatedModule } from '../ThemeProvider'
 import { BlurView } from './BlurView'
 
-// Minimal local mirror of react-native-reanimated's Animated.View — same reasoning as BlurView's
+// Minimal local mirror of react-native-reanimated's Animated.View - same reasoning as BlurView's
 // ExpoBlurModule: Metro doesn't rewrite a require()-in-try/catch call into its module graph inside
 // an ESM build, so the already-imported peer module is injected via <Provider reanimated={...}>
 // (see ThemeProvider.tsx) instead of required directly. Only `View` is needed here. `style: any`,
-// not a real style type — reanimated's actual AnimatedView only accepts its own branded
+// not a real style type - reanimated's actual AnimatedView only accepts its own branded
 // AnimatedStyle shape, which this package never imports (no reanimated dependency at all), so `any`
 // is the only type that both sides (this interface and the real component passed in) can agree on.
 export interface ReanimatedModule {
@@ -23,7 +23,7 @@ export type DialogProps = Omit<PaperDialogProps, 'style'> & {
   blur?: boolean
   style?: StyleProp<ViewStyle>
   // Applied to the card's outer wrapper instead of the card itself, and only takes effect once a
-  // reanimated module has been injected via <Provider reanimated={...}> — otherwise ignored. `style`
+  // reanimated module has been injected via <Provider reanimated={...}> - otherwise ignored. `style`
   // above is a plain object read once per render, so a fast-changing value (e.g. tracking the
   // keyboard height every frame) driven through it needs a full JS re-render per update to paint at
   // all; wiring the same value through `animatedStyle` (e.g. the result of Reanimated's

@@ -34,7 +34,7 @@ npm install expo-blur             # frosted-glass BlurView
 npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
 ```
 
-These integrations are opt-in: pass them to `Provider` (`expoBlur`, `navigationBar`, and `reanimated` — see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
+These integrations are opt-in: pass them to `Provider` (`expoBlur`, `navigationBar`, and `reanimated` - see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
 
 The exported Redux slice has no dependency on `@reduxjs/toolkit`: it works with RTK stores, vanilla Redux, or no Redux at all.
 
@@ -221,7 +221,7 @@ export function Theme({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Keep the scope honest: this only replaces the final `<Provider initialValue={...} onChange={...} onReady={...}>` prop list with `<Provider {...bridgeProps}>`. It doesn't do the `useSelector`/`useDispatch` wiring above it — that's still yours to write, since `RootState`'s shape is app-local and this package has no opinion on it (or on state management being Redux at all; `useThemeBridgeProps` takes plain values and callbacks, not a `dispatch` function).
+Keep the scope honest: this only replaces the final `<Provider initialValue={...} onChange={...} onReady={...}>` prop list with `<Provider {...bridgeProps}>`. It doesn't do the `useSelector`/`useDispatch` wiring above it - that's still yours to write, since `RootState`'s shape is app-local and this package has no opinion on it (or on state management being Redux at all; `useThemeBridgeProps` takes plain values and callbacks, not a `dispatch` function).
 
 ### With `useComputedTheme`
 
@@ -266,7 +266,7 @@ export default function App() {
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. On Android, expo-blur only blurs when given a `blurTarget` and a `blurMethod` (`'dimezisBlurView'`, or `'dimezisBlurViewSdk31Plus'` on API 31+); without both, `<BlurView>` renders the solid fallback there too, rather than expo-blur's unblurred translucent tint. |
-| `fontFamily` | `string` | Applied to every Paper typography variant (`bodyLarge`, `headlineMedium`, `labelSmall`, ...) via `configureFonts`'s flat-config mode — each variant keeps its own MD3 fontSize/lineHeight/weight, only fontFamily changes. Omit to keep each platform's system font. |
+| `fontFamily` | `string` | Applied to every Paper typography variant (`bodyLarge`, `headlineMedium`, `labelSmall`, ...) via `configureFonts`'s flat-config mode - each variant keeps its own MD3 fontSize/lineHeight/weight, only fontFamily changes. Omit to keep each platform's system font. |
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
@@ -288,7 +288,7 @@ export default function App() {
 
 ### `useThemeBridgeProps({ initialValue, onChange, onReady })`
 
-Reshapes already-resolved values into the exact `Pick<ProviderProps, 'initialValue' | 'onChange' | 'onReady'>` shape `Provider` expects, memoized on those three fields so the returned object is referentially stable across re-renders until an input actually changes. Meant for a consuming app's own Redux-backed "Theme" component — see "With Redux" above — but takes plain values and callbacks rather than a `dispatch` function or anything Redux-specific, so it works with any state management, or none.
+Reshapes already-resolved values into the exact `Pick<ProviderProps, 'initialValue' | 'onChange' | 'onReady'>` shape `Provider` expects, memoized on those three fields so the returned object is referentially stable across re-renders until an input actually changes. Meant for a consuming app's own Redux-backed "Theme" component - see "With Redux" above - but takes plain values and callbacks rather than a `dispatch` function or anything Redux-specific, so it works with any state management, or none.
 
 It only replaces the final prop list handed to `Provider`; it does not do any `useSelector`/`dispatch` wiring itself, and `onReady` is threaded through unchanged.
 
@@ -378,7 +378,7 @@ function SettingsScreen() {
 
 ### `AutoAppearancePicker`
 
-`AppearancePicker` wired straight to the `Provider`'s own `ThemeSettings` — for the common case where the appearance being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally, so it takes neither `value` nor `onChange`; every other `AppearancePicker` prop still passes through. Reach for the plain `AppearancePicker` instead when it needs to be controlled by something other than the global theme (a local preview before committing, one-off UI unrelated to `Provider`).
+`AppearancePicker` wired straight to the `Provider`'s own `ThemeSettings` - for the common case where the appearance being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally, so it takes neither `value` nor `onChange`; every other `AppearancePicker` prop still passes through. Reach for the plain `AppearancePicker` instead when it needs to be controlled by something other than the global theme (a local preview before committing, one-off UI unrelated to `Provider`).
 
 ```tsx
 import { AutoAppearancePicker } from '@rific/auto-paper'
@@ -390,7 +390,7 @@ function SettingsScreen() {
 
 ### `HarmonyPicker`
 
-Switches between the 6 `ColorHarmony` modes (`triadic`, `split-complementary`, `analogous`, `square`, `complementary`, `double-split`) via `react-native-paper`'s `SegmentedButtons`. `PalettePicker` can embed this same picker in its own dialog instead of standing alone — see `onHarmonyChange` below.
+Switches between the 6 `ColorHarmony` modes (`triadic`, `split-complementary`, `analogous`, `square`, `complementary`, `double-split`) via `react-native-paper`'s `SegmentedButtons`. `PalettePicker` can embed this same picker in its own dialog instead of standing alone - see `onHarmonyChange` below.
 
 ```tsx
 import { HarmonyPicker, useThemeSettings } from '@rific/auto-paper'
@@ -405,7 +405,7 @@ function SettingsScreen() {
 |---|---|---|
 | `value` | `ColorHarmony` | Currently selected harmony |
 | `onChange` | `(harmony: ColorHarmony) => void` | Called when a segment is tapped |
-| `showLabels` | `boolean` | Set `false` for icon-only segments. Also lowers Paper's default 76px-per-segment minimum width down to 0, so all 6 segments can always shrink to fit — however narrow the container, they resize down together instead of overflowing it. `accessibilityLabel` is always set regardless, so screen readers still announce the full harmony name either way. Defaults to `true` |
+| `showLabels` | `boolean` | Set `false` for icon-only segments. Also lowers Paper's default 76px-per-segment minimum width down to 0, so all 6 segments can always shrink to fit - however narrow the container, they resize down together instead of overflowing it. `accessibilityLabel` is always set regardless, so screen readers still announce the full harmony name either way. Defaults to `true` |
 | `checkedColor` / `uncheckedColor` | `string` | Icon color for the checked and unchecked segments, matching Paper's own segmented-button vocabulary |
 | `checkedContainerColor` / `uncheckedContainerColor` | `string` | Fill color for the checked and unchecked segments. Omit any of these four color props to fall back to Paper's default segmented-button styling |
 
@@ -514,7 +514,7 @@ import { IconButton } from '@rific/auto-paper'
 
 ### `PalettePicker`
 
-Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking. Pass `onHarmonyChange` to fold a compact, icon-only `HarmonyPicker` row into the same dialog, above the swatch grid — every swatch's own pie reshapes live as harmony changes, so there's one place to tune both instead of two separate controls. Omit it and this renders exactly as a plain color-only picker always has.
+Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking. Pass `onHarmonyChange` to fold a compact, icon-only `HarmonyPicker` row into the same dialog, above the swatch grid - every swatch's own pie reshapes live as harmony changes, so there's one place to tune both instead of two separate controls. Omit it and this renders exactly as a plain color-only picker always has.
 
 ```tsx
 import { PalettePicker, useThemeSettings } from '@rific/auto-paper'
@@ -537,7 +537,7 @@ function SettingsScreen() {
 
 ### `AutoPalettePicker`
 
-`PalettePicker` wired straight to the `Provider`'s own `ThemeSettings` — both color AND harmony — for the common case where the palette being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally (narrowing `ThemeSettings.color`'s `string | TriadicPalette` down to a plain string via `resolveSeedColor`), so it takes none of `value`/`onChange`/`harmony`/`onHarmonyChange`; `weights`/`colors`/`blur` still pass through. Reach for the plain `PalettePicker` instead when it needs to be controlled by something other than the global theme.
+`PalettePicker` wired straight to the `Provider`'s own `ThemeSettings` - both color AND harmony - for the common case where the palette being edited IS the whole app's own theme. Reads/writes `useThemeSettings()` internally (narrowing `ThemeSettings.color`'s `string | TriadicPalette` down to a plain string via `resolveSeedColor`), so it takes none of `value`/`onChange`/`harmony`/`onHarmonyChange`; `weights`/`colors`/`blur` still pass through. Reach for the plain `PalettePicker` instead when it needs to be controlled by something other than the global theme.
 
 ```tsx
 import { AutoPalettePicker } from '@rific/auto-paper'

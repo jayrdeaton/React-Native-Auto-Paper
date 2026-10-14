@@ -58,7 +58,7 @@ type Props = {
   harmony?: ColorHarmony
   // Opt-in: passing this turns on a compact, icon-only HarmonyPicker row inside the dialog, above
   // the swatch grid, so every swatch's own Pie preview reshapes live as harmony changes. Omit it
-  // and this renders exactly as a plain PalettePicker always has — same trigger, same dialog,
+  // and this renders exactly as a plain PalettePicker always has - same trigger, same dialog,
   // harmony fixed at whatever the `harmony` prop says. Gated on the callback itself rather than a
   // separate boolean so there's no way to pass one without the other.
   onHarmonyChange?: (harmony: ColorHarmony) => void
