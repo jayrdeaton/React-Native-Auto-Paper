@@ -425,6 +425,29 @@ import { Appbar } from '@rific/auto-paper'
 
 `Appbar.Content`, `Appbar.Action`, and `Appbar.BackAction` are re-exported directly from `react-native-paper`. Only `Appbar.Header` is wrapped: it applies `AppbarHeader` defaults from context and renders the synced `StatusBar`.
 
+### `BlurView`
+
+A frosted-glass surface that follows the theme. It blurs when `blur` is true (the default) and `expoBlur` is injected into `Provider` (on Android, only with a `blurTarget` and a `blurMethod`, see the `Provider` table); otherwise it renders a solid `surface` (or `surfaceVariant`) background. `Dialog` and `Menu` use it for their surfaces, passing the ambient `settings.blur`.
+
+```tsx
+import { BlurView, useBlur } from '@rific/auto-paper'
+
+<BlurView blur={useBlur()} elevation={2} style={{ borderRadius: 16, overflow: 'hidden' }}>
+  <Text>Frosted</Text>
+</BlurView>
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `blur` | `boolean` | Whether to blur at all (default `true`). Flipping it while mounted never remounts the children: their state, scroll position and focus survive |
+| `elevation` | `0`-`5` | Tints the surface with `colors.primary` at the MD3 elevation opacity |
+| `variant` | `'primary' \| 'secondary' \| 'tertiary' \| 'error' \| 'surface' \| 'surfaceVariant'` | Theme-derived tint (or, for `surfaceVariant`, the base surface color) |
+| `tintColor` / `tintOpacity` | `string` / `number` | An explicit tint overlay, overriding `variant` and `elevation` |
+| `intensity`, `blurMethod`, `blurTarget`, `blurReductionFactor` | | Passed to expo-blur's `BlurView`, as in expo-blur |
+| ...all `ViewProps` | | Applied to the outer `View` |
+
+Whether or not it blurs, `BlurView` is always the same outer `View`, holding the blurTint surface layer (at `settings.blurTint`), the tint, and the children. On iOS and Android the blur is an absolutely filled expo-blur layer behind them, the same structure as expo-blur's own native `BlurView`, so (as with expo-blur) rounded corners only clip the blur when the style also sets `overflow: 'hidden'`. On web the outer `View` is itself the CSS `backdrop-filter` element, styled the way expo-blur's web `BlurView` styles its own, so an opacity animated on `BlurView` (as `Dialog` and `Menu` do on web) fades the blur correctly instead of cutting it off.
+
 ### `BottomNavigation`
 
 A thin wrapper around `react-native-paper`'s `BottomNavigation` that keeps the Android system navigation bar icons readable: when `navigationBar` is injected into `Provider`, the icon style automatically follows the theme's darkness (edge-to-edge safe, no background color calls). Pass `onNavBarChange` to the `Provider` to take full control instead; with neither, it silently no-ops.

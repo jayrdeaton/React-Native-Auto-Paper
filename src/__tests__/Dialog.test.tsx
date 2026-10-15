@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
 import { Animated, Appearance, BackHandler, Platform, Pressable, View } from 'react-native'
 import { Dialog as PaperDialog, MD3LightTheme, Portal, useTheme } from 'react-native-paper'
 
@@ -16,6 +17,8 @@ jest.mock('react-native-safe-area-context', () => ({
 import type { ReanimatedModule } from '../components/Dialog'
 import { Dialog } from '../components/Dialog'
 import { Provider } from '../ThemeProvider'
+import type { ThemeSettings } from '../ThemeSettingsContext'
+import { useThemeSettings } from '../useThemeSettings'
 
 const mockAppearance = Appearance as jest.Mocked<typeof Appearance>
 const mockUseTheme = useTheme as jest.MockedFunction<typeof useTheme>
@@ -378,6 +381,68 @@ describe('Dialog', () => {
       const opacity = (Animated.Value as unknown as jest.Mock).mock.results[0].value
       expect(opacityOf(mockView, 'dialog-surface')).toEqual({ __multiply: [opacity, 0.5] })
       expect(opacityOf(mockPressable, 'dialog-backdrop')).toBe(opacity)
+    })
+  })
+
+  // The player's settings sheet is itself a Dialog with a Blur toggle in it, so flipping settings.blur
+  // while a Dialog is open must not remount its content (scroll offset, focus, ripples, local state).
+  describe('blur toggle while open', () => {
+    const mockPlatform = Platform as { OS: string }
+    afterEach(() => {
+      mockPlatform.OS = 'ios'
+    })
+
+    const fakeExpoBlur = { BlurView: () => <div data-testid='expo-blur-view' /> }
+    const flatten = (style: unknown): Record<string, unknown> => (Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : ((style as Record<string, unknown>) ?? {}))
+    const lastSurfaceStyle = () => flatten(mockView.mock.calls.filter(([props]) => props.testID === 'dialog-surface').slice(-1)[0][0].style)
+
+    it.each(['ios', 'web'])('keeps the content mounted when settings.blur flips on %s', (os) => {
+      mockPlatform.OS = os
+      const lifecycle: string[] = []
+      const Probe = () => {
+        useEffect(() => {
+          lifecycle.push('mount')
+          return () => {
+            lifecycle.push('unmount')
+          }
+        }, [])
+        return null
+      }
+      let setSettings: (patch: Partial<ThemeSettings>) => void = () => {}
+      const SettingsHandle = () => {
+        setSettings = useThemeSettings().set
+        return null
+      }
+      const isBlurred = () => (os === 'web' ? 'backdropFilter' in lastSurfaceStyle() : screen.queryByTestId('expo-blur-view') !== null)
+
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <SettingsHandle />
+          <Dialog visible onDismiss={jest.fn()}>
+            <Probe />
+          </Dialog>
+        </Provider>
+      )
+      expect(isBlurred()).toBe(true)
+      act(() => setSettings({ blur: false }))
+      expect(isBlurred()).toBe(false)
+      act(() => setSettings({ blur: true }))
+      expect(isBlurred()).toBe(true)
+      expect(lifecycle).toEqual(['mount'])
+    })
+
+    it('on web, keeps the fade on the backdrop-filter element itself when blurred', () => {
+      mockPlatform.OS = 'web'
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <Dialog visible onDismiss={jest.fn()}>
+            content
+          </Dialog>
+        </Provider>
+      )
+      const opacity = (Animated.Value as unknown as jest.Mock).mock.results[0].value
+      expect(lastSurfaceStyle()).toEqual(expect.objectContaining({ backdropFilter: 'saturate(180%) blur(10px)', opacity }))
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
     })
   })
 

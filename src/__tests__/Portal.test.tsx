@@ -167,7 +167,8 @@ describe('Portal content under Provider', () => {
       </Provider>
     )
 
-    expect(screen.getByTestId('expo-blur').textContent).toBe('content')
+    // The blur is a layer inside BlurView's own View, next to the content rather than around it.
+    expect(screen.getByTestId('expo-blur').parentElement?.contains(screen.getByText('content'))).toBe(true)
   })
 
   it("renders Menu's surface through the injected expo-blur", () => {
@@ -179,6 +180,6 @@ describe('Portal content under Provider', () => {
       </Provider>
     )
 
-    expect(screen.getByTestId('expo-blur').textContent).toBe('item')
+    expect(screen.getByTestId('expo-blur').parentElement?.contains(screen.getByText('item'))).toBe(true)
   })
 })

@@ -58,7 +58,16 @@ export type BlurViewProps = ExpoBlurViewProps & {
   variant?: 'primary' | 'secondary' | 'tertiary' | 'error' | 'surface' | 'surfaceVariant'
 }
 
-export const BlurView = ({ blur = true, children, elevation, style, tintColor, tintOpacity, variant = 'surface', ...props }: BlurViewProps) => {
+// The style expo-blur's web BlurView puts on its View (getBlurStyle in its src/BlurView.web.tsx, with
+// getBackgroundColor's 'dark' and 'light' tints, the only two this component uses): a CSS
+// backdrop-filter plus a translucent tint. On web BlurView applies it to its own View instead.
+const getWebBlurStyle = (intensity: number, dark: boolean) => {
+  const amount = Math.min(intensity, 100)
+  const filter = `saturate(180%) blur(${amount * 0.2}px)`
+  return { backdropFilter: filter, backgroundColor: `rgba(${dark ? '25,25,25' : '249,249,249'},${(amount / 100) * 0.78})`, WebkitBackdropFilter: filter } as ViewStyle
+}
+
+export const BlurView = ({ blur = true, blurMethod, blurReductionFactor, blurTarget, children, elevation, experimentalBlurMethod, intensity, style, tint: _tint, tintColor, tintOpacity, variant = 'surface', ...props }: BlurViewProps) => {
   const { dark, colors } = useTheme()
   const { settings } = useContext(ThemeSettingsContext)
   const expoBlur = useBlurModule()
@@ -67,16 +76,21 @@ export const BlurView = ({ blur = true, children, elevation, style, tintColor, t
   const resolvedTintColor = tintColor ?? variantColor ?? (elevation !== undefined ? colors.primary : undefined)
   const resolvedTintOpacity = tintOpacity ?? (tintColor ? (dark ? 0.24 : 0.16) : variantColor ? (dark ? VARIANT_TINT_OPACITY.dark : VARIANT_TINT_OPACITY.light) : elevation !== undefined ? ELEVATION_OPACITY[elevation] : 0)
   const tint = resolvedTintColor && resolvedTintOpacity > 0 ? <View style={[StyleSheet.absoluteFill, { backgroundColor: resolvedTintColor, opacity: resolvedTintOpacity }]} /> : null
-  if (blur && expoBlur && (Platform.OS !== 'android' || blursOnAndroid(props)))
-    return (
-      <expoBlur.BlurView {...props} tint={dark ? 'dark' : 'light'} style={style}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: surfaceColor, opacity: settings.blurTint }]} />
-        {tint}
-        {children}
-      </expoBlur.BlurView>
-    )
+  const blurProps = { blurMethod, blurReductionFactor, blurTarget, experimentalBlurMethod, intensity }
+  const blurs = blur && expoBlur !== undefined && (Platform.OS !== 'android' || blursOnAndroid(blurProps))
+  const web = Platform.OS === 'web'
+  // The View holding the children is the same element whether or not blur applies, so flipping
+  // `blur` (a Dialog or Menu following the player's live settings.blur) never remounts them: their
+  // state, scroll offset, focus and ripples all survive. On iOS and Android the blur is an absoluteFill
+  // layer behind everything else, the same structure as expo-blur's own native BlurView. On web it
+  // can't be: Dialog and Menu fade this View's own opacity there, and an ancestor below opacity 1 cuts
+  // a CSS backdrop-filter off from the page behind it, so on web this View itself is the
+  // backdrop-filter element, styled the way expo-blur's web BlurView styles its own.
+  const containerStyle = !blurs ? [{ backgroundColor: surfaceColor }, style] : web ? [style, getWebBlurStyle(intensity ?? 50, dark)] : style
   return (
-    <View {...props} style={[{ backgroundColor: surfaceColor }, style]}>
+    <View {...props} style={containerStyle}>
+      {blurs && !web ? <expoBlur.BlurView {...blurProps} style={StyleSheet.absoluteFill} tint={dark ? 'dark' : 'light'} /> : null}
+      {blurs ? <View style={[StyleSheet.absoluteFill, { backgroundColor: surfaceColor, opacity: settings.blurTint }]} /> : null}
       {tint}
       {children}
     </View>

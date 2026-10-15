@@ -1,10 +1,14 @@
-import { render, screen } from '@testing-library/react'
-import { Appearance, Platform, View } from 'react-native'
+import { act, render, screen } from '@testing-library/react'
+import { useEffect } from 'react'
+import { Appearance, Platform, StyleSheet, View } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, useTheme } from 'react-native-paper'
 
-import type { ExpoBlurModule } from '../components/BlurView'
+import { useBlur } from '../BlurContext'
+import type { BlurViewProps, ExpoBlurModule } from '../components/BlurView'
 import { BlurView } from '../components/BlurView'
 import { Provider } from '../ThemeProvider'
+import type { ThemeSettings } from '../ThemeSettingsContext'
+import { useThemeSettings } from '../useThemeSettings'
 
 // expo-blur is no longer auto-detected via require() - Metro doesn't rewrite a
 // require()-in-try/catch call into its module graph inside an ESM (.mjs) build, so the
@@ -24,6 +28,13 @@ const fakeExpoBlur: ExpoBlurModule = {
   BlurView: jest.fn(({ children }) => <div data-testid='expo-blur-view'>{children}</div>)
 }
 const mockExpoBlurView = fakeExpoBlur.BlurView as unknown as jest.Mock
+// The shared react-native mock's Platform is a plain object, so tests set OS/Version on it directly.
+const mockPlatform = Platform as { OS: string; Version?: number }
+
+// The shared StyleSheet mock's flatten is the identity, so nested/falsy style arrays are merged here.
+const flatten = (style: unknown): Record<string, unknown> => (Array.isArray(style) ? Object.assign({}, ...style.map(flatten)) : ((style as Record<string, unknown>) ?? {}))
+// Props from the latest render of the View carrying this testID (BlurView's own View, here).
+const lastPropsOf = (mock: jest.Mock, testID: string) => mock.mock.calls.filter(([props]) => props.testID === testID).slice(-1)[0]?.[0]
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -159,8 +170,6 @@ describe('BlurView', () => {
   // otherwise it paints its tint as a flat translucent fill with the screen showing through
   // unblurred, so BlurView renders its solid look instead.
   describe('on Android', () => {
-    // The shared react-native mock's Platform is a plain object, so these tests set OS/Version on it directly.
-    const mockPlatform = Platform as { OS: string; Version?: number }
     const blurTarget = { current: null }
 
     beforeEach(() => {
@@ -224,18 +233,181 @@ describe('BlurView', () => {
     })
   })
 
-  it('still blurs on web without a blurTarget (backdrop-filter needs none)', () => {
-    const mockPlatform = Platform as { OS: string }
-    mockPlatform.OS = 'web'
-    try {
+  // On iOS and Android the blur is an absoluteFill layer inside BlurView's own View, the same structure
+  // as expo-blur's own native BlurView, rather than the element wrapping the children.
+  describe('native blur layer', () => {
+    it('renders expo-blur as a childless layer inside its own unpainted View, routing the expo-blur props to it', () => {
+      mockUseTheme.mockReturnValue(MD3LightTheme as any)
+      const style = { borderRadius: 12 }
       render(
         <Provider expoBlur={fakeExpoBlur}>
-          <BlurView>content</BlurView>
+          <BlurView blurReductionFactor={2} intensity={80} style={style} testID='blur'>
+            content
+          </BlurView>
         </Provider>
       )
-      expect(screen.getByTestId('expo-blur-view')).toBeTruthy()
-    } finally {
+      const container = lastPropsOf(mockView, 'blur')
+      expect(container.style).toBe(style)
+      for (const key of ['blurMethod', 'blurReductionFactor', 'blurTarget', 'experimentalBlurMethod', 'intensity', 'tint']) expect(container).not.toHaveProperty(key)
+      expect(mockExpoBlurView.mock.calls[0][0]).toEqual(expect.objectContaining({ blurReductionFactor: 2, intensity: 80, style: StyleSheet.absoluteFill, tint: 'light' }))
+      expect(screen.getByTestId('expo-blur-view').textContent).toBe('')
+      // The blurTint surface layer still sits over the blur.
+      expect(mockView.mock.calls.map(([props]) => props.style)).toContainEqual([StyleSheet.absoluteFill, { backgroundColor: MD3LightTheme.colors.surface, opacity: 0.2 }])
+    })
+
+    it("ignores a tint prop, following the theme's dark/light instead", () => {
+      mockUseTheme.mockReturnValue(MD3DarkTheme as any)
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView tint='extraLight'>content</BlurView>
+        </Provider>
+      )
+      expect(mockExpoBlurView.mock.calls[0][0].tint).toBe('dark')
+    })
+
+    it('keeps the expo-blur props off the solid fallback View', () => {
+      mockUseTheme.mockReturnValue(MD3LightTheme as any)
+      render(
+        <BlurView intensity={80} testID='blur'>
+          content
+        </BlurView>
+      )
+      expect(lastPropsOf(mockView, 'blur')).not.toHaveProperty('intensity')
+    })
+  })
+
+  // On web BlurView's own View is the backdrop-filter element, styled the way expo-blur's web BlurView
+  // styles its own: Dialog and Menu fade that View's opacity there, and a faded ancestor would cut the
+  // backdrop-filter off from the page behind it.
+  describe('on web', () => {
+    beforeEach(() => {
+      mockPlatform.OS = 'web'
+    })
+
+    afterEach(() => {
       mockPlatform.OS = 'ios'
+    })
+
+    it('blurs without a blurTarget, styling its own View rather than rendering an expo-blur element', () => {
+      mockUseTheme.mockReturnValue(MD3LightTheme as any)
+      const style = { borderRadius: 12 }
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView style={style} testID='blur'>
+            content
+          </BlurView>
+        </Provider>
+      )
+      expect(screen.queryByTestId('expo-blur-view')).toBeNull()
+      // expo-blur's own defaults (intensity 50, tint 'light'), after the passed style as expo-blur orders them.
+      expect(lastPropsOf(mockView, 'blur').style).toEqual([style, { backdropFilter: 'saturate(180%) blur(10px)', backgroundColor: 'rgba(249,249,249,0.39)', WebkitBackdropFilter: 'saturate(180%) blur(10px)' }])
+      expect(mockView.mock.calls.map(([props]) => props.style)).toContainEqual([StyleSheet.absoluteFill, { backgroundColor: MD3LightTheme.colors.surface, opacity: 0.2 }])
+    })
+
+    it("follows intensity (capped at 100, as expo-blur caps it) and the theme's dark tint", () => {
+      mockUseTheme.mockReturnValue(MD3DarkTheme as any)
+      const { rerender } = render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView intensity={80} testID='blur' />
+        </Provider>
+      )
+      expect(flatten(lastPropsOf(mockView, 'blur').style)).toEqual({ backdropFilter: 'saturate(180%) blur(16px)', backgroundColor: 'rgba(25,25,25,0.6240000000000001)', WebkitBackdropFilter: 'saturate(180%) blur(16px)' })
+      rerender(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView intensity={150} testID='blur' />
+        </Provider>
+      )
+      expect(flatten(lastPropsOf(mockView, 'blur').style)).toEqual({ backdropFilter: 'saturate(180%) blur(20px)', backgroundColor: 'rgba(25,25,25,0.78)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' })
+    })
+
+    it('renders the plain solid surface, with no backdrop-filter, when blur={false}', () => {
+      mockUseTheme.mockReturnValue(MD3LightTheme as any)
+      render(
+        <Provider expoBlur={fakeExpoBlur}>
+          <BlurView blur={false} testID='blur'>
+            content
+          </BlurView>
+        </Provider>
+      )
+      expect(lastPropsOf(mockView, 'blur').style).toEqual([{ backgroundColor: MD3LightTheme.colors.surface }, undefined])
+    })
+  })
+
+  // Dialog and Menu follow the player's live settings.blur, so flipping it while one is open must not
+  // remount BlurView's children: a settings sheet's own Blur toggle would otherwise reset the sheet's
+  // scroll offset, cut off the ripple, drop keyboard focus on web and reset any local state inside it.
+  describe('when blur flips', () => {
+    const lifecycle: string[] = []
+    const Probe = () => {
+      useEffect(() => {
+        lifecycle.push('mount')
+        return () => {
+          lifecycle.push('unmount')
+        }
+      }, [])
+      return null
     }
+
+    // What Dialog and Menu do: follow settings.blur unless their own blur prop overrides it.
+    const SettingsBlurView = (props: BlurViewProps) => <BlurView blur={useBlur()} {...props} />
+    let setSettings: (patch: Partial<ThemeSettings>) => void = () => {}
+    const SettingsHandle = () => {
+      setSettings = useThemeSettings().set
+      return null
+    }
+
+    describe.each([
+      ['ios', {}],
+      ['android', { blurMethod: 'dimezisBlurView', blurTarget: { current: null } }],
+      ['web', {}]
+    ] as const)('on %s', (os, platformProps) => {
+      beforeEach(() => {
+        lifecycle.length = 0
+        mockUseTheme.mockReturnValue(MD3LightTheme as any)
+        mockPlatform.OS = os
+        mockPlatform.Version = 34
+      })
+
+      afterEach(() => {
+        mockPlatform.OS = 'ios'
+        delete mockPlatform.Version
+      })
+
+      const isBlurred = () => (os === 'web' ? 'backdropFilter' in flatten(lastPropsOf(mockView, 'blur').style) : screen.queryByTestId('expo-blur-view') !== null)
+
+      it('keeps its children mounted when the blur prop flips', () => {
+        const ui = (blur: boolean) => (
+          <Provider expoBlur={fakeExpoBlur}>
+            <BlurView {...platformProps} blur={blur} testID='blur'>
+              <Probe />
+            </BlurView>
+          </Provider>
+        )
+        const { rerender } = render(ui(true))
+        expect(isBlurred()).toBe(true)
+        rerender(ui(false))
+        expect(isBlurred()).toBe(false)
+        rerender(ui(true))
+        expect(isBlurred()).toBe(true)
+        expect(lifecycle).toEqual(['mount'])
+      })
+
+      it("keeps its children mounted when Provider's settings.blur flips", () => {
+        render(
+          <Provider expoBlur={fakeExpoBlur}>
+            <SettingsHandle />
+            <SettingsBlurView {...platformProps} testID='blur'>
+              <Probe />
+            </SettingsBlurView>
+          </Provider>
+        )
+        expect(isBlurred()).toBe(true)
+        act(() => setSettings({ blur: false }))
+        expect(isBlurred()).toBe(false)
+        act(() => setSettings({ blur: true }))
+        expect(isBlurred()).toBe(true)
+        expect(lifecycle).toEqual(['mount'])
+      })
+    })
   })
 })
