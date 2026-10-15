@@ -91,9 +91,10 @@ export function FadingScrollView({ style, fadeHeight = SCROLL_FADE_HEIGHT, onScr
   )
 }
 
-// React Native's native linear gradient (0.77+, the New Architecture; the fleet's apps are on 0.86), not
-// in this package's own 0.76 dev types, hence the cast. A mask's alpha is what shows: opaque keeps the
-// content, transparent hides it.
+// React Native's native linear gradient (0.77+, the New Architecture; the fleet's apps are on 0.86). Cast
+// because the peer floor is still 0.76, whose types don't have it, and an app resolves this source file
+// against its own React Native types. A mask's alpha is what shows: opaque keeps the content, transparent
+// hides it.
 const FADE_IN_BAND = { experimental_backgroundImage: 'linear-gradient(transparent, #000)' } as unknown as ViewStyle
 const FADE_OUT_BAND = { experimental_backgroundImage: 'linear-gradient(#000, transparent)' } as unknown as ViewStyle
 

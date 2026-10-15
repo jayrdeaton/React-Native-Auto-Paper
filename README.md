@@ -272,7 +272,8 @@ export default function App() {
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
 | `reanimated` | `ReanimatedModule` | Injects `react-native-reanimated` (for example `import Reanimated from 'react-native-reanimated'`) so `<Dialog animatedStyle={...}>` can animate its card on the UI thread. Omit to keep `animatedStyle` as a no-op. |
-| `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults |
+| `statusBar` | `boolean` | Renders React Native's `StatusBar`, styled from the theme (here and in `Appbar.Header`). Default `true`. Pass `false` when the app sets the status bar per screen instead (react-native-screens' `statusBarStyle`/`statusBarHidden` screen options, which need `UIViewControllerBasedStatusBarAppearance` on): there a React Native `StatusBar` logs an error. An app linked against the iOS 27 SDK can't set the status bar app-wide at all, which is the only way that component works on iOS, so per-screen options are the way to style it there. |
+| `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults (ignored when `statusBar` is `false`) |
 | `style` | `StyleProp<ViewStyle>` | Applied to the wrapper `View` |
 
 `Provider` also renders its own `Portal.Host`, nested inside everything it injects, so anything rendered through `react-native-paper`'s `Portal` (this package's `Dialog`, Paper's `Menu` and `Tooltip`, or a `Modal`/`Snackbar`/anything else you wrap in `<Portal>` yourself) still sees `expoBlur`, `reanimated` and `defaults`. Paper's own host sits above all of those and its `Portal` only carries the theme across, so without this a portaled `Dialog` or `Menu` would silently render its solid fallback. Contexts your app provides *inside* `Provider` (a toast provider, say) are a separate matter: portal content can't see them unless you render another `<Portal.Host>` below them.
@@ -412,7 +413,7 @@ function SettingsScreen() {
 
 ### `Appbar`
 
-A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs `StatusBar` background color and bar style to the current theme surface color.
+A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs `StatusBar` background color and bar style to the current theme surface color (no `StatusBar` under `<Provider statusBar={false}>`).
 
 ```tsx
 import { Appbar } from '@rific/auto-paper'

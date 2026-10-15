@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { useContext } from 'react'
+import * as ReactNative from 'react-native'
 import { Appearance } from 'react-native'
 
+import { Appbar } from '../components/Appbar'
 import { Provider } from '../ThemeProvider'
 import { defaultThemeSettings, ThemeSettingsContext } from '../ThemeSettingsContext'
 
@@ -111,5 +113,41 @@ describe('Provider', () => {
       </Provider>
     )
     expect(onChange).not.toHaveBeenCalled()
+  })
+
+  describe('statusBar', () => {
+    it('renders a StatusBar styled from the theme by default', () => {
+      const mockStatusBar = jest.spyOn(ReactNative, 'StatusBar')
+      render(
+        <Provider initialValue={{ appearance: 'dark' }} statusBarProps={{ animated: true }}>
+          {null}
+        </Provider>
+      )
+      expect(mockStatusBar).toHaveBeenCalledTimes(1)
+      expect(mockStatusBar.mock.calls[0][0]).toMatchObject({ barStyle: 'light-content', animated: true })
+      mockStatusBar.mockRestore()
+    })
+
+    it('renders none, in Provider or Appbar.Header, when statusBar is false (an app that sets the status bar per screen)', () => {
+      const mockStatusBar = jest.spyOn(ReactNative, 'StatusBar')
+      render(
+        <Provider statusBar={false} statusBarProps={{ animated: true }}>
+          <Appbar.Header>content</Appbar.Header>
+        </Provider>
+      )
+      expect(mockStatusBar).not.toHaveBeenCalled()
+      mockStatusBar.mockRestore()
+    })
+
+    it('still renders Appbar.Header its own StatusBar under a default Provider', () => {
+      const mockStatusBar = jest.spyOn(ReactNative, 'StatusBar')
+      render(
+        <Provider>
+          <Appbar.Header>content</Appbar.Header>
+        </Provider>
+      )
+      expect(mockStatusBar).toHaveBeenCalledTimes(2)
+      mockStatusBar.mockRestore()
+    })
   })
 })
