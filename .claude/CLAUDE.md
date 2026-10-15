@@ -81,13 +81,14 @@ src/
 
 - `Provider` (exported as `ThemeProvider`/`AutoPaperProvider` in docs): wraps `PaperProvider`, accepts `initialValue`, `defaults`, `onChange`, `onNavBarChange`, `onReady`, `statusBarProps`, `style`
 - `useReanimatedModule()`: resolves the injected `reanimated` module (or `undefined`); `Dialog`'s `animatedStyle` prop only animates on the UI thread when this is present, otherwise it's ignored
+- `useMaskedViewModule()` / `FadingScrollView` / `SCROLL_FADE_HEIGHT` / `MaskedViewModule` (2026-10-15, moved here from `@tastic/hud` so every app can use it): a ScrollView whose content fades out over 24pt at each edge while there is more past it (the bottom until the end, the top once scrolled down), the cue that rows continue under a pinned footer or past the top edge (hud's Settings sheet, Solitaire's Rules). It MASKS the content (a `MaskedView` from `Provider`'s `maskedView`, whose bottom band is RN 0.77+'s native `experimental_backgroundImage` gradient; a CSS `mask-image` on web, where react-native-masked-view's web build only renders the mask element), so a blurred surface behind stays seamless; a frosted footer `BlurView` nested in a blurred card was tried in hud and left a seam on iOS and web. Without `maskedView` it scrolls with no fade on native. Only "more below" is state (sizes live in a ref), so scrolling re-renders nothing until the fade turns on or off. The gradient style is cast: this repo's dev types are RN 0.76.
 - `useComputedTheme(appearance, color, harmony?)`: `color` is a seed string (expanded via `harmony`) or an explicit `{ primary, secondary, tertiary }` triad (harmony ignored); returns `MD3Theme | null`
 - `useAutoPaperTheme()`: typed wrapper around react-native-paper's own `useTheme()`, extended with `AutoPaperTheme`'s extra color roles
 - `useThemeSettings()`: read/update the current `ThemeSettings` from inside `Provider`
 - `useThemeBridgeProps({ initialValue, onChange, onReady })` / `ThemeBridgeProps` type: reshapes an app's own already-resolved Redux state/dispatch results into the exact `Pick<ProviderProps, 'initialValue' | 'onChange' | 'onReady'>` shape, memoized on those three fields, ready to spread onto `Provider` (`<Provider {...bridgeProps}>`) - see Design Notes for what this hook does and does not replace
 - `usePaperDefaults()`: read component prop defaults from context
 - `useBlur(override?)`: resolve the effective blur setting
-- Wrapper components: `Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`
+- Wrapper components: `Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FadingScrollView`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`
 - `themeReducer` / `themeActions` / `createThemeReducer` / selectors / `ThemeState`: optional Redux integration
 - `getColorRoles(base, surface, containerAlpha?)` / `ColorRoles` type: MD3 color/onColor/container/onContainer role quadruple
 - Color utils: `getTriadicPalette`, `getThirdColor`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `getContrastColor`, `isDarkColor`, `getRgb`, `getHex`
@@ -137,8 +138,9 @@ src/
 - `react-native-paper` (required)
 - `expo-blur` (optional, frosted-glass `BlurView`; without it, `BlurView` renders its solid fallback, as it also does on Android unless given a `blurTarget` plus a `blurMethod`)
 - `expo-navigation-bar` (optional, >= 56.0.0, auto-syncs the Android nav bar icon style when `BottomNavigation` is mounted)
+- `@react-native-masked-view/masked-view` (optional, `FadingScrollView`'s fade on iOS/Android; the fleet's apps already have it through expo-router)
 
-Both optional peers are loaded via a `try { require(...) } catch { return null }` guard (see `src/navigation-bar.ts` and `src/components/BlurView.tsx`), with a local mirrored type shape for each instead of importing the peer's real types, so consumers who never installed the optional peer aren't forced to resolve it, at runtime or in the type checker.
+The optional peers are handed in through `Provider` (`expoBlur`, `navigationBar`, `maskedView`), not required by this package: a `require()` inside try/catch stopped working once bundlers resolved the ESM build (see ThemeProvider.tsx). Each has a local mirrored type shape (`ExpoBlurModule`, `ExpoNavigationBarModule`, `MaskedViewModule`) instead of the peer's real types, so a consumer that never installed one isn't forced to resolve it, at runtime or in the type checker.
 
 ## Testing
 

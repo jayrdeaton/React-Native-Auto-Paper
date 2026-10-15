@@ -4,6 +4,7 @@ import { configureFonts, Portal, Provider as PaperProvider } from 'react-native-
 
 import type { ExpoBlurModule } from './components/BlurView'
 import type { ReanimatedModule } from './components/Dialog'
+import type { MaskedViewModule } from './components/FadingScrollView'
 import type { ExpoNavigationBarModule } from './navigation-bar'
 import { type PaperDefaults, PaperDefaultsContext } from './PaperDefaultsContext'
 import { type ThemeSettings, themeSettingsProvider, useThemeSettingsInternal } from './ThemeSettingsContext'
@@ -24,6 +25,9 @@ export const useBlurModule = () => useContext(BlurModuleContext)
 const ReanimatedModuleContext = createContext<ReanimatedModule | undefined>(undefined)
 export const useReanimatedModule = () => useContext(ReanimatedModuleContext)
 
+const MaskedViewModuleContext = createContext<MaskedViewModule | undefined>(undefined)
+export const useMaskedViewModule = () => useContext(MaskedViewModuleContext)
+
 export type ProviderProps = {
   children: ReactNode
   defaults?: PaperDefaults
@@ -36,6 +40,8 @@ export type ProviderProps = {
    * to keep each platform's system font (MD3's own default). */
   fontFamily?: string
   initialValue?: Partial<ThemeSettings>
+  /** Injects @react-native-masked-view/masked-view so `<FadingScrollView>` can fade its content out above a pinned footer on iOS and Android. Pass `import MaskedView from '@react-native-masked-view/masked-view'`; omit to have it scroll without the fade there (web never needs it). */
+  maskedView?: MaskedViewModule
   /** Injects expo-navigation-bar so the Android nav bar icon style auto-syncs with the theme. Pass `import * as ExpoNavigationBar from 'expo-navigation-bar'`; omit (and don't pass onNavBarChange) to skip nav bar syncing entirely. */
   navigationBar?: ExpoNavigationBarModule
   onChange?: (settings: ThemeSettings) => void
@@ -53,10 +59,10 @@ export type ProviderProps = {
 // wrapper for the settings half; ThemeProviderBody (an actual descendant, reached via
 // useThemeSettingsInternal()) does all the theme-computation/gating work the single combined
 // component used to do directly.
-export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
+export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, maskedView, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBarProps, style }: ProviderProps) {
   return (
     <ThemeSettingsProvider initialValue={initialValue} onChange={onChange}>
-      <ThemeProviderBody defaults={defaults} expoBlur={expoBlur} fontFamily={fontFamily} navigationBar={navigationBar} onNavBarChange={onNavBarChange} onReady={onReady} reanimated={reanimated} statusBarProps={statusBarProps} style={style}>
+      <ThemeProviderBody defaults={defaults} expoBlur={expoBlur} fontFamily={fontFamily} maskedView={maskedView} navigationBar={navigationBar} onNavBarChange={onNavBarChange} onReady={onReady} reanimated={reanimated} statusBarProps={statusBarProps} style={style}>
         {children}
       </ThemeProviderBody>
     </ThemeSettingsProvider>
@@ -67,7 +73,7 @@ const ThemeSettingsProvider = themeSettingsProvider
 
 type ThemeProviderBodyProps = Omit<ProviderProps, 'initialValue' | 'onChange'>
 
-function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, navigationBar, onNavBarChange, onReady, reanimated, statusBarProps, style }: ThemeProviderBodyProps) {
+function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, maskedView, navigationBar, onNavBarChange, onReady, reanimated, statusBarProps, style }: ThemeProviderBodyProps) {
   const { settings } = useThemeSettingsInternal()
 
   const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
@@ -99,17 +105,19 @@ function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, navigatio
         <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
           <BlurModuleContext.Provider value={expoBlur}>
             <ReanimatedModuleContext.Provider value={reanimated}>
-              {/* PaperProvider's own PortalHost sits above every context provided here, and Paper's
+              <MaskedViewModuleContext.Provider value={maskedView}>
+                {/* PaperProvider's own PortalHost sits above every context provided here, and Paper's
                   Portal only carries its theme and settings across, so anything rendered through a
                   Portal (this package's Dialog, Paper's Menu and Tooltip, or anything an app wraps
-                  in <Portal> itself) would otherwise lose expoBlur, reanimated, defaults and the nav
+                  in <Portal> itself) would otherwise lose expoBlur, reanimated, maskedView, defaults and the nav
                   bar hooks: Dialog/Menu's blur silently fell back to solid. This nested host is the
                   nearest one for every Portal under Provider, so their content mounts inside all of
                   these contexts instead. It wraps the styled View, not the other way round, so
                   portals still cover the full area regardless of `style`. */}
-              <Portal.Host>
-                <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
-              </Portal.Host>
+                <Portal.Host>
+                  <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+                </Portal.Host>
+              </MaskedViewModuleContext.Provider>
             </ReanimatedModuleContext.Provider>
           </BlurModuleContext.Provider>
         </NavBarContext.Provider>

@@ -34,7 +34,7 @@ npm install expo-blur             # frosted-glass BlurView
 npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
 ```
 
-These integrations are opt-in: pass them to `Provider` (`expoBlur`, `navigationBar`, and `reanimated` - see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
+These integrations are opt-in: pass them to `Provider` (`expoBlur`, `maskedView`, `navigationBar`, and `reanimated` - see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `FadingScrollView` scrolls without its fade on iOS and Android, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
 
 The exported Redux slice has no dependency on `@reduxjs/toolkit`: it works with RTK stores, vanilla Redux, or no Redux at all.
 
@@ -266,6 +266,7 @@ export default function App() {
 | `children` | `ReactNode` | |
 | `defaults` | `PaperDefaults` | Prop defaults for wrapper components (see below) |
 | `expoBlur` | `ExpoBlurModule` | Injects `expo-blur` (`import * as ExpoBlur from 'expo-blur'`) so `<BlurView>` renders the real frosted-glass effect. Omit to always render its solid fallback. On Android, expo-blur only blurs when given a `blurTarget` and a `blurMethod` (`'dimezisBlurView'`, or `'dimezisBlurViewSdk31Plus'` on API 31+); without both, `<BlurView>` renders the solid fallback there too, rather than expo-blur's unblurred translucent tint. |
+| `maskedView` | `MaskedViewModule` | Injects `@react-native-masked-view/masked-view` (`import MaskedView from '@react-native-masked-view/masked-view'`) so `<FadingScrollView>` fades its content out above a pinned footer on iOS and Android. Omit to have it scroll without the fade there; web needs nothing. |
 | `fontFamily` | `string` | Applied to every Paper typography variant (`bodyLarge`, `headlineMedium`, `labelSmall`, ...) via `configureFonts`'s flat-config mode - each variant keeps its own MD3 fontSize/lineHeight/weight, only fontFamily changes. Omit to keep each platform's system font. |
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
@@ -513,6 +514,26 @@ function SettingsDialog({ visible }: { visible: boolean }) {
 | ...all `DialogProps` | | All props from `react-native-paper`'s `Dialog` are supported |
 
 `DialogProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `DialogProps` with the `blur` and `animatedStyle` fields. Use `PaperDialogProps` if you need the base paper type.
+
+### `FadingScrollView`
+
+A vertical `ScrollView` whose content fades to transparent over `fadeHeight` (default `SCROLL_FADE_HEIGHT`, 24) at each edge while there is more to scroll past it: at the bottom until the end is reached (the cue that rows continue below a pinned footer, such as a dialog's Done button), and at the top once scrolled down (never at rest, so a header at the top is never dimmed). It masks the content instead of painting over it, so whatever is behind it (a blurred `Dialog`/`BlurView` surface or a solid one, light or dark) stays one continuous surface. A second `BlurView` as a frosted footer leaves a seam instead: a blur nested inside a blurred card can't frost the card's own content.
+
+```tsx
+import MaskedView from '@react-native-masked-view/masked-view'
+import { Dialog, FadingScrollView, Provider } from '@rific/auto-paper'
+
+<Provider maskedView={MaskedView}>
+  <Dialog visible onDismiss={close}>
+    <Dialog.ScrollArea>
+      <FadingScrollView>{rows}</FadingScrollView>
+    </Dialog.ScrollArea>
+    <Dialog.Actions>{done}</Dialog.Actions>
+  </Dialog>
+</Provider>
+```
+
+On iOS and Android it needs `maskedView` injected into `Provider` (and React Native 0.77+, for the native gradient it masks with); without it, it scrolls with no fade. On web it uses a CSS `mask-image` and needs nothing (react-native-masked-view's web build doesn't mask). `style` goes on the outer box, so `flexGrow`/`flexShrink`/`alignSelf` work as on a plain `ScrollView`; every other prop, `onScroll`/`onLayout`/`onContentSizeChange` included, reaches the `ScrollView`.
 
 ### `IconButton`
 

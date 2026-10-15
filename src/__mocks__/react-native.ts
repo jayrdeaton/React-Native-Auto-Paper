@@ -20,6 +20,8 @@ const StatusBar = stub
 export { Appearance, StatusBar, StyleSheet }
 export const TouchableOpacity = jest.fn(stub)
 export const View = jest.fn(stub)
+// FadingScrollView's tests read the props it hands its ScrollView (the scroll and layout handlers).
+export const ScrollView = jest.fn(stub)
 
 export const Platform = { OS: 'ios' }
 
