@@ -413,7 +413,7 @@ function SettingsScreen() {
 
 ### `Appbar`
 
-A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs `StatusBar` background color and bar style to the current theme surface color (no `StatusBar` under `<Provider statusBar={false}>`).
+A thin wrapper around `react-native-paper`'s `Appbar` that automatically syncs the `StatusBar` bar style to the current theme (React Native 0.88 removed `StatusBar`'s Android-only `backgroundColor`, which edge-to-edge already ignored, so 0.13.3 stopped passing it) (no `StatusBar` under `<Provider statusBar={false}>`).
 
 ```tsx
 import { Appbar } from '@rific/auto-paper'

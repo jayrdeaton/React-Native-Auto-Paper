@@ -11,7 +11,7 @@ function Header({ style, ...props }: AppbarHeaderProps) {
   const statusBar = useStatusBarEnabled()
   return (
     <>
-      {statusBar && <StatusBar backgroundColor={theme.colors.surface} barStyle={theme.dark ? 'light-content' : 'dark-content'} />}
+      {statusBar && <StatusBar barStyle={theme.dark ? 'light-content' : 'dark-content'} />}
       <PaperAppbar.Header {...defaults.AppbarHeader} {...props} style={style} />
     </>
   )

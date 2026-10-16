@@ -15,21 +15,21 @@ beforeEach(() => {
 
 describe('Appbar', () => {
   describe('Header', () => {
-    it('renders a StatusBar with theme.colors.surface and dark-content when theme.dark is false', () => {
+    it('renders a StatusBar with dark-content and no backgroundColor (React Native 0.88 removed it) when theme.dark is false', () => {
       const mockStatusBar = jest.spyOn(ReactNative, 'StatusBar')
       render(<Appbar.Header>content</Appbar.Header>)
       const call = mockStatusBar.mock.calls[0][0]
-      expect(call.backgroundColor).toBe(MD3LightTheme.colors.surface)
+      expect('backgroundColor' in call).toBe(false)
       expect(call.barStyle).toBe('dark-content')
       mockStatusBar.mockRestore()
     })
 
-    it('renders a StatusBar with theme.colors.surface and light-content when theme.dark is true', () => {
+    it('renders a StatusBar with light-content and no backgroundColor when theme.dark is true', () => {
       mockUseTheme.mockReturnValue(MD3DarkTheme as ReturnType<typeof useTheme>)
       const mockStatusBar = jest.spyOn(ReactNative, 'StatusBar')
       render(<Appbar.Header>content</Appbar.Header>)
       const call = mockStatusBar.mock.calls[0][0]
-      expect(call.backgroundColor).toBe(MD3DarkTheme.colors.surface)
+      expect('backgroundColor' in call).toBe(false)
       expect(call.barStyle).toBe('light-content')
       mockStatusBar.mockRestore()
     })

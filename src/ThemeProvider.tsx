@@ -109,7 +109,7 @@ function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, maskedVie
 
   return (
     <PaperProvider theme={theme}>
-      {statusBar && <StatusBar backgroundColor={theme.colors.background} barStyle={theme.dark ? 'light-content' : 'dark-content'} {...statusBarProps} />}
+      {statusBar && <StatusBar barStyle={theme.dark ? 'light-content' : 'dark-content'} {...statusBarProps} />}
       <StatusBarEnabledContext.Provider value={statusBar}>
         <PaperDefaultsContext.Provider value={defaults ?? {}}>
           <NavBarContext.Provider value={{ navigationBar, onNavBarChange }}>
