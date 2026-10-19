@@ -37,15 +37,20 @@ describe('getColorRoles', () => {
     }
   })
 
-  // onColor's target lightness is picked from `color`'s own darkness alone (a cheap binary
-  // choice, same as useComputedTheme's pre-existing primary/secondary/tertiary math this was
-  // extracted from); unlike onContainer, it isn't verified against the actual rebuilt result, so
-  // it isn't guaranteed AA-safe for every input hue. This only checks it moves in the right
-  // direction, not a specific ratio.
-  it.each(Object.entries(BASE_COLORS))('picks a lighter onColor for darker colors and vice versa', (_name, base) => {
+  // onColor stays light (the fleet's buttons have always had light text) wherever light text still
+  // reads, the picker's reds, blues and greens included, and turns dark on colors too light for it.
+  it.each(Object.entries({ ...BASE_COLORS, red: '#F44336', coral: '#FF5722', emerald: '#4CAF50', blue: '#2196F3', indigo: '#3F51B5', magenta: '#D500F9' }))('keeps light onColor on %s, where it reads', (_name, base) => {
     const roles = getColorRoles(base, SURFACE.light)
-    const wantsLightText = relativeLuminance(base) < 0.5
-    expect(relativeLuminance(roles.onColor) > relativeLuminance(base)).toBe(wantsLightText)
+    expect(relativeLuminance(roles.onColor)).toBeGreaterThan(relativeLuminance(base))
+    expect(contrastRatio(roles.onColor, base)).toBeGreaterThanOrEqual(2.5)
+  })
+
+  // Jay, 2026-10-19: these took near-white text by the color's own darkness alone (1.96:1 on the
+  // picker's Lime), unreadable on a button.
+  it.each(Object.entries({ lime: '#8BC34A', amber: '#FF9800', cyan: '#00BCD4', sky: '#03A9F4', yellow: '#FDD835', materialLime: '#CDDC39' }))('takes dark onColor on %s, too light for light text', (_name, base) => {
+    const roles = getColorRoles(base, SURFACE.light)
+    expect(relativeLuminance(roles.onColor)).toBeLessThan(relativeLuminance(base))
+    expect(contrastRatio(roles.onColor, base)).toBeGreaterThanOrEqual(4.5)
   })
 
   it('lightens the container toward a light surface, and darkens it toward a dark surface', () => {

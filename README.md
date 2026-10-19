@@ -648,7 +648,7 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor, resolveSeedColor } from '@rific/auto-paper'
+import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, getContrastRatio, getLuminance, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor, resolveSeedColor } from '@rific/auto-paper'
 import type { ColorHarmony, TriadicPalette } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
@@ -661,7 +661,9 @@ getTriadicPalette('#6750a4', 'double-split')
 getThirdColor('#e53935', '#1e88e5')          // → '#59e52a' (hue maximally distant from both inputs; s/l averaged from both)
 
 getBlendedColor('#ff0000', '#0000ff', 0.5)   // → '#800080'
-getColorRoles('#6750a4', '#fffbfe')          // → { color, onColor, container, onContainer }: the MD3 color/onColor/container/onContainer math, generalized (this is what useComputedTheme uses internally for every role)
+getColorRoles('#6750a4', '#fffbfe')          // → { color, onColor, container, onContainer }: the MD3 color/onColor/container/onContainer math, generalized (this is what useComputedTheme uses internally for every role). onColor is light while light text reads on the color at 2.5:1, dark below that
+getContrastRatio('#767676', '#ffffff')       // → 4.54 (WCAG 2 contrast ratio, 1 to 21, either order)
+getLuminance('#ffffff')                      // → 1 (WCAG 2 relative luminance, 0 for black)
 getContrastColor('#6750a4')                  // → '#ffffff' (black/white pick for content sitting on a fully saturated fill)
 isDarkColor('#6750a4')                       // → true
 getRgb('coral')                              // → { r: 255, g: 127, b: 80 }

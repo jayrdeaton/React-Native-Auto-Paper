@@ -67,6 +67,7 @@ src/
     getHex.ts                - converts any color format to hex string
     getBlendedColor.ts      - alpha-blend two colors
     getColorRoles.ts        - derives the MD3 color/onColor/container/onContainer role quadruple from a base color + surface
+    getContrastRatio.ts     - WCAG 2 relative luminance (getLuminance) and contrast ratio (getContrastRatio)
     getSwatchContrast.ts    - getContrastColor (checkmark/icon color) + getSwatchRing (outline styling, normal vs selected) for a color swatch
     getTonalColor.ts        - clamps a color's lightness to a target, preserving hue/saturation
     getTintTextColor.ts     - contrast-safe text color for content on a BlurView tint
@@ -90,8 +91,8 @@ src/
 - `useBlur(override?)`: resolve the effective blur setting
 - Wrapper components: `Appbar`, `AppearancePicker`, `AutoAppearancePicker`, `AutoPalettePicker`, `BlurView`, `BottomNavigation`, `Button`, `Chip`, `ColorPicker`, `Dialog`, `FadingScrollView`, `FAB`, `HarmonyPicker`, `IconButton`, `Menu`, `PalettePicker`, `TextInput`
 - `themeReducer` / `themeActions` / `createThemeReducer` / selectors / `ThemeState`: optional Redux integration
-- `getColorRoles(base, surface, containerAlpha?)` / `ColorRoles` type: MD3 color/onColor/container/onContainer role quadruple
-- Color utils: `getTriadicPalette`, `getThirdColor`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `getContrastColor`, `isDarkColor`, `getRgb`, `getHex`
+- `getColorRoles(base, surface, containerAlpha?)` / `ColorRoles` type: MD3 color/onColor/container/onContainer role quadruple. `onColor` stays light while light text reads on the color at 2.5:1 and turns dark below that (since 0.13.4; it used to follow `isDarkColor`, which gave light-ish colors like light green, cyan, amber and light blue near-white text at about 2:1)
+- Color utils: `getTriadicPalette`, `getThirdColor`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `getContrastColor`, `getContrastRatio`, `getLuminance`, `isDarkColor`, `getRgb`, `getHex`
 
 ## Design Notes
 
