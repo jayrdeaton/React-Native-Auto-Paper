@@ -3,6 +3,7 @@ import { Appearance } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme, MD3Theme } from 'react-native-paper'
 
 import { getBlendedColor } from './utils/getBlendedColor'
+import type { PaletteTone } from './utils/getChalkboardColor'
 import { getColorRoles } from './utils/getColorRoles'
 import { getHex } from './utils/getHex'
 import { getRgb } from './utils/getRgb'
@@ -57,7 +58,9 @@ export type SemanticColorRoles = {
 // with react-native-paper's own `useTheme<T>()` generic (see useTheme.ts's useAutoPaperTheme).
 export type AutoPaperTheme = Omit<MD3Theme, 'colors'> & { colors: MD3Theme['colors'] & SemanticColorRoles }
 
-export function useComputedTheme(appearance: ThemeAppearance, color: string | TriadicPalette, harmony: ColorHarmony = 'split-complementary'): AutoPaperTheme | null {
+// `paletteTone` (optional, see Provider's prop of the same name) maps each resolved palette color
+// before anything is derived from it. It must be referentially stable: it's a dependency.
+export function useComputedTheme(appearance: ThemeAppearance, color: string | TriadicPalette, harmony: ColorHarmony = 'split-complementary', paletteTone?: PaletteTone): AutoPaperTheme | null {
   const [theme, setTheme] = useState<AutoPaperTheme | null>(null)
 
   // Destructured to primitives (rather than depending on `color` itself below) so that passing a
@@ -104,7 +107,12 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string | Tr
       }
     }
 
-    const palette: TriadicPalette = secondaryInput !== null && tertiaryInput !== null ? { primary: normalizeExplicitColor(primaryInput), secondary: normalizeExplicitColor(secondaryInput), tertiary: normalizeExplicitColor(tertiaryInput) } : getTriadicPalette(primaryInput, harmony)
+    const untoned: TriadicPalette = secondaryInput !== null && tertiaryInput !== null ? { primary: normalizeExplicitColor(primaryInput), secondary: normalizeExplicitColor(secondaryInput), tertiary: normalizeExplicitColor(tertiaryInput) } : getTriadicPalette(primaryInput, harmony)
+    // Toned per member, after the harmony rotation: a tone that moves lightness doesn't commute
+    // with rotating hue, so toning the seed first would give secondary and tertiary colors the
+    // pickers never showed. Everything below (roles, containers, outline, surfaceVariant,
+    // elevation) derives from the toned palette; the semantic roles above never pass through it.
+    const palette: TriadicPalette = paletteTone ? { primary: paletteTone(untoned.primary, base.dark), secondary: paletteTone(untoned.secondary, base.dark), tertiary: paletteTone(untoned.tertiary, base.dark) } : untoned
 
     const primaryRoles = getColorRoles(palette.primary, surface)
     _theme.colors.primary = primaryRoles.color
@@ -144,7 +152,7 @@ export function useComputedTheme(appearance: ThemeAppearance, color: string | Tr
     }
 
     setTheme(_theme)
-  }, [appearance, primaryInput, secondaryInput, tertiaryInput, harmony])
+  }, [appearance, primaryInput, secondaryInput, tertiaryInput, harmony, paletteTone])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: first render must stay theme-less (README's onReady/splash-screen contract) and Appearance must not be read during render (SSR/hydration risk)

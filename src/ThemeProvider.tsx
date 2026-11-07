@@ -9,6 +9,7 @@ import type { ExpoNavigationBarModule } from './navigation-bar'
 import { type PaperDefaults, PaperDefaultsContext } from './PaperDefaultsContext'
 import { type ThemeSettings, themeSettingsProvider, useThemeSettingsInternal } from './ThemeSettingsContext'
 import { useComputedTheme } from './useComputedTheme'
+import type { PaletteTone } from './utils/getChalkboardColor'
 
 // expo-navigation-bar/expo-blur are no longer auto-detected via require() - Metro doesn't
 // rewrite a require()-in-try/catch call into its module graph inside an ESM (.mjs) build, so
@@ -27,6 +28,10 @@ export const useReanimatedModule = () => useContext(ReanimatedModuleContext)
 
 const MaskedViewModuleContext = createContext<MaskedViewModule | undefined>(undefined)
 export const useMaskedViewModule = () => useContext(MaskedViewModuleContext)
+
+// The Provider's `paletteTone`, for AutoPalettePicker to preview swatches the way the theme will draw them.
+const PaletteToneContext = createContext<PaletteTone | undefined>(undefined)
+export const usePaletteTone = () => useContext(PaletteToneContext)
 
 // Whether this package's own components (Provider, Appbar.Header) render a React Native StatusBar - see `statusBar` below.
 const StatusBarEnabledContext = createContext(true)
@@ -51,6 +56,15 @@ export type ProviderProps = {
   onChange?: (settings: ThemeSettings) => void
   onNavBarChange?: (color: string, dark: boolean) => void
   onReady?: () => void
+  /** Maps each palette color (primary, secondary and tertiary, after the harmony rotation) before the
+   * theme derives anything from it, for an app that wants its whole palette toned, e.g.
+   * `getChalkboardColor` (marker in light mode, chalk in dark). The stored seed stays the player's
+   * raw pick, so nothing compounds on save, and `AutoPalettePicker` previews its swatches through
+   * the same tone. onColor/onContainer follow the toned colors by the usual light/dark split, so a
+   * tone decides their polarity: chalk's luminance floor is what gives its pastels dark text.
+   * Signal colors (success, warning, danger, MD3's error) are never toned. Must be referentially stable (a module-level
+   * function): the theme recomputes whenever it changes. Omit for the untoned palette. */
+  paletteTone?: PaletteTone
   /** Injects react-native-reanimated so `<Dialog animatedStyle={...}>` (e.g. from `useAnimatedStyle()`) can animate its card on the UI thread. Pass `import Reanimated from 'react-native-reanimated'`; omit to keep Dialog's `animatedStyle` prop a no-op. */
   reanimated?: ReanimatedModule
   /** Renders React Native's `StatusBar`, styled from the theme (here and in `Appbar.Header`). Default true. Pass false
@@ -68,10 +82,10 @@ export type ProviderProps = {
 // wrapper for the settings half; ThemeProviderBody (an actual descendant, reached via
 // useThemeSettingsInternal()) does all the theme-computation/gating work the single combined
 // component used to do directly.
-export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, maskedView, navigationBar, onChange, onNavBarChange, onReady, reanimated, statusBar, statusBarProps, style }: ProviderProps) {
+export function Provider({ children, defaults, expoBlur, fontFamily, initialValue, maskedView, navigationBar, onChange, onNavBarChange, onReady, paletteTone, reanimated, statusBar, statusBarProps, style }: ProviderProps) {
   return (
     <ThemeSettingsProvider initialValue={initialValue} onChange={onChange}>
-      <ThemeProviderBody defaults={defaults} expoBlur={expoBlur} fontFamily={fontFamily} maskedView={maskedView} navigationBar={navigationBar} onNavBarChange={onNavBarChange} onReady={onReady} reanimated={reanimated} statusBar={statusBar} statusBarProps={statusBarProps} style={style}>
+      <ThemeProviderBody defaults={defaults} expoBlur={expoBlur} fontFamily={fontFamily} maskedView={maskedView} navigationBar={navigationBar} onNavBarChange={onNavBarChange} onReady={onReady} paletteTone={paletteTone} reanimated={reanimated} statusBar={statusBar} statusBarProps={statusBarProps} style={style}>
         {children}
       </ThemeProviderBody>
     </ThemeSettingsProvider>
@@ -82,10 +96,10 @@ const ThemeSettingsProvider = themeSettingsProvider
 
 type ThemeProviderBodyProps = Omit<ProviderProps, 'initialValue' | 'onChange'>
 
-function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, maskedView, navigationBar, onNavBarChange, onReady, reanimated, statusBar = true, statusBarProps, style }: ThemeProviderBodyProps) {
+function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, maskedView, navigationBar, onNavBarChange, onReady, paletteTone, reanimated, statusBar = true, statusBarProps, style }: ThemeProviderBodyProps) {
   const { settings } = useThemeSettingsInternal()
 
-  const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony)
+  const computedTheme = useComputedTheme(settings.appearance, settings.color, settings.harmony, paletteTone)
   // Layered on top of useComputedTheme's own output rather than folded into it - that hook only
   // ever recomputes for a color/appearance/harmony change, and fontFamily is a completely
   // independent axis; merging it there would mean either re-running the whole color computation on
@@ -116,17 +130,19 @@ function ThemeProviderBody({ children, defaults, expoBlur, fontFamily, maskedVie
             <BlurModuleContext.Provider value={expoBlur}>
               <ReanimatedModuleContext.Provider value={reanimated}>
                 <MaskedViewModuleContext.Provider value={maskedView}>
-                  {/* PaperProvider's own PortalHost sits above every context provided here, and Paper's
+                  <PaletteToneContext.Provider value={paletteTone}>
+                    {/* PaperProvider's own PortalHost sits above every context provided here, and Paper's
                   Portal only carries its theme and settings across, so anything rendered through a
                   Portal (this package's Dialog, Paper's Menu and Tooltip, or anything an app wraps
-                  in <Portal> itself) would otherwise lose expoBlur, reanimated, maskedView, defaults, statusBar and the nav
+                  in <Portal> itself) would otherwise lose expoBlur, reanimated, maskedView, paletteTone, defaults, statusBar and the nav
                   bar hooks: Dialog/Menu's blur silently fell back to solid. This nested host is the
                   nearest one for every Portal under Provider, so their content mounts inside all of
                   these contexts instead. It wraps the styled View, not the other way round, so
                   portals still cover the full area regardless of `style`. */}
-                  <Portal.Host>
-                    <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
-                  </Portal.Host>
+                    <Portal.Host>
+                      <View style={[styles.flex, { backgroundColor: theme.colors.background }, style]}>{children}</View>
+                    </Portal.Host>
+                  </PaletteToneContext.Provider>
                 </MaskedViewModuleContext.Provider>
               </ReanimatedModuleContext.Provider>
             </BlurModuleContext.Provider>

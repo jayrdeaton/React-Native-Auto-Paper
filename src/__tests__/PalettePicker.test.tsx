@@ -5,7 +5,9 @@ import { Icon, MD3LightTheme, SegmentedButtons, TouchableRipple, useTheme } from
 import { defaultColors } from '../components/ColorPicker'
 import { Dialog } from '../components/Dialog'
 import { PalettePicker } from '../components/PalettePicker'
+import { getChalkboardColor } from '../utils/getChalkboardColor'
 import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
+import { getTriadicPalette } from '../utils/getTriadicPalette'
 
 // See ColorPicker.test.tsx for why Dialog is stubbed rather than rendered for real. Wrapped in
 // jest.fn() (rather than the plain function component other suites stub it with) so this file can
@@ -119,5 +121,53 @@ describe('PalettePicker', () => {
     act(() => lastDialogProps().onDismiss?.())
 
     expect(lastDialogProps().visible).toBe(false)
+  })
+
+  describe('previewColor', () => {
+    const chalk = (color: string) => getChalkboardColor(color, true)
+    // Every Pie wedge fill, in render order (each pie draws primary, tertiary, secondary).
+    const wedgeFills = () =>
+      mockView.mock.calls
+        .map(([props]) => (props as { style?: unknown }).style)
+        .flatMap((style) => (Array.isArray(style) ? style : [style]))
+        .filter((style): style is { backgroundColor: string } => typeof (style as { backgroundColor?: unknown } | undefined)?.backgroundColor === 'string')
+        .map((style) => style.backgroundColor)
+    const pieOf = (hex: string, tone = chalk) => {
+      const palette = getTriadicPalette(hex, 'triadic')
+      return [tone(palette.primary), tone(palette.tertiary), tone(palette.secondary)]
+    }
+
+    it('draws the trigger and every swatch through it, each wedge toned after the harmony rotation', () => {
+      render(<PalettePicker value='#f44336' onChange={jest.fn()} harmony='triadic' previewColor={chalk} />)
+      expect(wedgeFills().slice(0, 3)).toEqual(pieOf('#f44336'))
+
+      mockView.mockClear()
+      openDialog()
+      const fills = wedgeFills()
+      defaultColors.forEach(({ value: hex }) => expect(fills).toEqual(expect.arrayContaining(pieOf(hex))))
+    })
+
+    it('rings and checks against the drawn color, while matching, selecting and reporting the raw seed', () => {
+      const onChange = jest.fn()
+      const selected = defaultColors[11].value
+      render(<PalettePicker value={selected} onChange={onChange} harmony='triadic' previewColor={chalk} />)
+      openDialog()
+
+      const drawn = chalk(getTriadicPalette(selected, 'triadic').primary)
+      const checks = mockIcon.mock.calls.filter(([props]) => props.source === 'check')
+      expect(checks).toHaveLength(1)
+      expect(checks[0][0].color).toBe(getContrastColor(drawn))
+      const [, , ...swatchRings] = ringViewStyles()
+      expect(swatchRings[11]).toEqual(expect.arrayContaining([expect.objectContaining(getSwatchRing(drawn, true, OUTLINE))]))
+
+      const { onPress } = mockTouchableOpacity.mock.calls[4][0] as { onPress?: () => void }
+      act(() => onPress?.())
+      expect(onChange).toHaveBeenCalledWith(defaultColors[4].value)
+    })
+
+    it('draws the raw palette without it', () => {
+      render(<PalettePicker value='#f44336' onChange={jest.fn()} harmony='triadic' />)
+      expect(wedgeFills().slice(0, 3)).toEqual(pieOf('#f44336', (color) => color))
+    })
   })
 })

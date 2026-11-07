@@ -3,6 +3,10 @@ import { Appearance } from 'react-native'
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper'
 
 import { SEMANTIC_BASE_COLORS, ThemeAppearance, useComputedTheme } from '../useComputedTheme'
+import { getBlendedColor } from '../utils/getBlendedColor'
+import { getChalkboardColor, type PaletteTone } from '../utils/getChalkboardColor'
+import { getColorRoles } from '../utils/getColorRoles'
+import { getTriadicPalette } from '../utils/getTriadicPalette'
 
 const relativeLuminance = (hex: string): number => {
   const n = parseInt(hex.replace('#', ''), 16)
@@ -190,6 +194,70 @@ describe('useComputedTheme', () => {
       expect(result.current?.colors.onError).toBe(MD3DarkTheme.colors.onError)
       expect(result.current?.colors.errorContainer).toBe(MD3DarkTheme.colors.errorContainer)
       expect(result.current?.colors.onErrorContainer).toBe(MD3DarkTheme.colors.onErrorContainer)
+    })
+  })
+
+  describe('paletteTone', () => {
+    const SURFACES = { light: 'rgba(255, 251, 254, 1)', dark: 'rgba(28, 27, 31, 1)' }
+
+    it.each(['light', 'dark'] as const)('tones each palette member after the harmony rotation (%s), and derives every role from the toned palette', (mode) => {
+      const { result } = renderHook(() => useComputedTheme(mode, '#f44336', 'split-complementary', getChalkboardColor))
+      const raw = getTriadicPalette('#f44336', 'split-complementary')
+      const dark = mode === 'dark'
+      const toned = { primary: getChalkboardColor(raw.primary, dark), secondary: getChalkboardColor(raw.secondary, dark), tertiary: getChalkboardColor(raw.tertiary, dark) }
+      const colors = result.current!.colors
+
+      expect([colors.primary, colors.secondary, colors.tertiary]).toEqual([toned.primary, toned.secondary, toned.tertiary])
+      // Toning the seed first and rotating that would give a different secondary.
+      expect(colors.secondary).not.toBe(getTriadicPalette(getChalkboardColor('#f44336', dark), 'split-complementary').secondary)
+      const roles = getColorRoles(toned.primary, SURFACES[mode])
+      expect([colors.onPrimary, colors.primaryContainer, colors.onPrimaryContainer]).toEqual([roles.onColor, roles.container, roles.onContainer])
+      expect(colors.outline).toBe(getBlendedColor(toned.primary, (dark ? MD3DarkTheme : MD3LightTheme).colors.outline, 0.45))
+      expect(colors.surfaceVariant).toBe(getBlendedColor(getBlendedColor(toned.primary, toned.secondary, 0.5), SURFACES[mode], 0.2))
+    })
+
+    it.each(['light', 'dark'] as const)('leaves the signal colors exactly as they are without a tone (%s)', (mode) => {
+      const untoned = renderHook(() => useComputedTheme(mode, '#f44336')).result.current!.colors
+      const toned = renderHook(() => useComputedTheme(mode, '#f44336', 'split-complementary', getChalkboardColor)).result.current!.colors
+      const signals = ['success', 'onSuccess', 'successContainer', 'onSuccessContainer', 'warning', 'onWarning', 'warningContainer', 'onWarningContainer', 'danger', 'onDanger', 'dangerContainer', 'onDangerContainer', 'error', 'onError', 'errorContainer', 'onErrorContainer', 'surface', 'background', 'onSurface'] as const
+
+      for (const key of signals) expect([key, toned[key]]).toEqual([key, untoned[key]])
+      expect(toned.primary).not.toBe(untoned.primary)
+    })
+
+    // The picker's 20 swatches: marker stays below half luminance, so its fills keep light text like
+    // every other app's; chalk's luminance floor puts its pastels above it, so they take dark text.
+    it.each(['#f44336', '#ff5722', '#ff6d00', '#ff9800', '#fdd835', '#8bc34a', '#4caf50', '#009688', '#00bcd4', '#03a9f4', '#2196f3', '#3f51b5', '#673ab7', '#9c27b0', '#d500f9', '#ec407a', '#e91e63', '#795548', '#8d7b68', '#607d8b'])('gives %s light text on its marker primary and dark text on its chalk primary, both readable', (seed) => {
+      const light = renderHook(() => useComputedTheme('light', seed, 'split-complementary', getChalkboardColor)).result.current!.colors
+      const dark = renderHook(() => useComputedTheme('dark', seed, 'split-complementary', getChalkboardColor)).result.current!.colors
+
+      expect(relativeLuminance(light.onPrimary)).toBeGreaterThan(relativeLuminance(light.primary))
+      expect(contrastRatio(light.onPrimary, light.primary)).toBeGreaterThanOrEqual(3.3)
+      expect(relativeLuminance(dark.onPrimary)).toBeLessThan(relativeLuminance(dark.primary))
+      expect(contrastRatio(dark.onPrimary, dark.primary)).toBeGreaterThanOrEqual(7)
+    })
+
+    it('tells the tone which appearance it is toning for', () => {
+      const tone = jest.fn<string, Parameters<PaletteTone>>((color) => color)
+      renderHook(() => useComputedTheme('dark', '#f44336', 'triadic', tone))
+
+      expect(tone).toHaveBeenCalledTimes(3)
+      expect(tone.mock.calls.every(([, dark]) => dark)).toBe(true)
+    })
+
+    it('tones an explicit triad too', () => {
+      const { result } = renderHook(() => useComputedTheme('light', { primary: '#ffeb3b', secondary: '#03a9f4', tertiary: '#e91e63' }, undefined, getChalkboardColor))
+
+      expect(result.current!.colors.primary).toBe(getChalkboardColor('#ffeb3b', false))
+      expect(result.current!.colors.tertiary).toBe(getChalkboardColor('#e91e63', false))
+    })
+
+    it('recomputes when the tone changes, and goes back to the untoned palette without one', () => {
+      const { result, rerender } = renderHook(({ tone }: { tone?: PaletteTone }) => useComputedTheme('light', '#f44336', 'split-complementary', tone), { initialProps: { tone: getChalkboardColor as PaletteTone | undefined } })
+      expect(result.current!.colors.primary).toBe(getChalkboardColor('#f44336', false))
+
+      rerender({ tone: undefined })
+      expect(result.current!.colors.primary).toBe('#f44336')
     })
   })
 })

@@ -2,9 +2,11 @@ import { act, render, screen } from '@testing-library/react'
 import { Appearance } from 'react-native'
 import { configureFonts } from 'react-native-paper'
 
-import { Provider } from '../ThemeProvider'
+import { Provider, usePaletteTone } from '../ThemeProvider'
 import { defaultThemeSettings, type ThemeSettings } from '../ThemeSettingsContext'
+import { useComputedTheme } from '../useComputedTheme'
 import { useThemeSettings } from '../useThemeSettings'
+import { getChalkboardColor } from '../utils/getChalkboardColor'
 
 // The shared react-native-paper mock (src/__mocks__/react-native-paper.ts) doesn't export
 // configureFonts at all, and it's off-limits to edit for this suite - so it's mocked locally
@@ -15,6 +17,13 @@ jest.mock('react-native-paper', () => ({
   ...jest.requireActual('react-native-paper'),
   configureFonts: jest.fn(() => ({ mockedFontConfig: true }))
 }))
+
+// The real hook, wrapped to see what Provider passes it.
+jest.mock('../useComputedTheme', () => {
+  const actual = jest.requireActual('../useComputedTheme')
+  return { ...actual, useComputedTheme: jest.fn(actual.useComputedTheme) }
+})
+const mockUseComputedTheme = useComputedTheme as jest.MockedFunction<typeof useComputedTheme>
 
 const mockAppearance = Appearance as jest.Mocked<typeof Appearance>
 const mockConfigureFonts = configureFonts as jest.MockedFunction<typeof configureFonts>
@@ -115,6 +124,36 @@ describe('Provider', () => {
       )
       expect(mockConfigureFonts).toHaveBeenCalledTimes(1)
       expect(mockConfigureFonts).toHaveBeenCalledWith({ config: { fontFamily: 'CustomFont' } })
+    })
+  })
+
+  describe('paletteTone', () => {
+    let seenTone: unknown = 'unset'
+    const ToneConsumer = () => {
+      seenTone = usePaletteTone()
+      return null
+    }
+
+    it('hands it to the theme computation and to everything under the Provider, AutoPalettePicker included', () => {
+      render(
+        <Provider paletteTone={getChalkboardColor}>
+          <ToneConsumer />
+        </Provider>
+      )
+
+      expect(mockUseComputedTheme).toHaveBeenLastCalledWith(defaultThemeSettings.appearance, defaultThemeSettings.color, defaultThemeSettings.harmony, getChalkboardColor)
+      expect(seenTone).toBe(getChalkboardColor)
+    })
+
+    it('passes nothing when it is omitted', () => {
+      render(
+        <Provider>
+          <ToneConsumer />
+        </Provider>
+      )
+
+      expect(mockUseComputedTheme).toHaveBeenLastCalledWith(defaultThemeSettings.appearance, defaultThemeSettings.color, defaultThemeSettings.harmony, undefined)
+      expect(seenTone).toBeUndefined()
     })
   })
 })

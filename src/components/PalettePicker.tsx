@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { StyleSheet, TouchableOpacity, View } from 'react-native'
 import { Icon, TouchableRipple, useTheme } from 'react-native-paper'
 
@@ -65,21 +65,35 @@ type Props = {
   weights?: PaletteWeights
   colors?: SeedColor[]
   blur?: boolean
+  // Opt-in: maps each wedge's color (after the harmony rotation) to what's actually drawn, so the
+  // swatches preview a toned theme (see Provider's `paletteTone`; AutoPalettePicker wires it from
+  // there). Display only: `value`, the check mark's match and onChange stay the raw seed hex.
+  previewColor?: (color: string) => string
 }
 
-export const PalettePicker = ({ value, onChange, harmony = 'split-complementary', onHarmonyChange, weights, colors = defaultColors, blur: blurProp }: Props) => {
+export const PalettePicker = ({ value, onChange, harmony = 'split-complementary', onHarmonyChange, weights, colors = defaultColors, blur: blurProp, previewColor }: Props) => {
   const blur = useBlur(blurProp)
   const { colors: themeColors } = useTheme()
   const [open, setOpen] = useState(false)
   const { onLayout, size } = useSwatchSize(SIZE)
+  // What each pie draws. The rings and check marks contrast with the drawn primary, not the raw
+  // seed, since a toned swatch can be much lighter or darker than its seed.
+  const shade = useMemo(
+    () =>
+      (palette: TriadicPalette): TriadicPalette =>
+        previewColor ? { primary: previewColor(palette.primary), secondary: previewColor(palette.secondary), tertiary: previewColor(palette.tertiary) } : palette,
+    [previewColor]
+  )
+  const triggerPalette = shade(getTriadicPalette(value, harmony))
+  const swatchPalettes = useMemo(() => colors.map(({ value: hex }) => shade(getTriadicPalette(hex, harmony))), [colors, harmony, shade])
 
   return (
     <>
       <TouchableRipple onPress={() => setOpen(true)} style={styles.trigger} borderless>
         <View style={styles.triggerContent}>
-          <Pie palette={getTriadicPalette(value, harmony)} weights={weights} />
-          <View pointerEvents='none' style={[styles.triggerIcon, { borderRadius: SIZE / 2 }, getSwatchRing(value, false, themeColors.outlineVariant)]}>
-            <Icon source='palette' size={20} color={getContrastColor(value)} />
+          <Pie palette={triggerPalette} weights={weights} />
+          <View pointerEvents='none' style={[styles.triggerIcon, { borderRadius: SIZE / 2 }, getSwatchRing(triggerPalette.primary, false, themeColors.outlineVariant)]}>
+            <Icon source='palette' size={20} color={getContrastColor(triggerPalette.primary)} />
           </View>
         </View>
       </TouchableRipple>
@@ -92,7 +106,7 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
             </View>
           )}
           <View style={styles.swatches} onLayout={onLayout}>
-            {colors.map(({ value: hex }) => (
+            {colors.map(({ value: hex }, index) => (
               <TouchableOpacity
                 key={hex}
                 onPress={() => {
@@ -101,9 +115,9 @@ export const PalettePicker = ({ value, onChange, harmony = 'split-complementary'
                 }}
                 style={[styles.swatch, { height: size, width: size }]}
               >
-                <Pie palette={getTriadicPalette(hex, harmony)} weights={weights} size={size} />
-                <View pointerEvents='none' style={[styles.ring, { borderRadius: size / 2 }, getSwatchRing(hex, value === hex, themeColors.outlineVariant)]}>
-                  {value === hex && <Icon source='check' size={20} color={getContrastColor(hex)} />}
+                <Pie palette={swatchPalettes[index]} weights={weights} size={size} />
+                <View pointerEvents='none' style={[styles.ring, { borderRadius: size / 2 }, getSwatchRing(swatchPalettes[index].primary, value === hex, themeColors.outlineVariant)]}>
+                  {value === hex && <Icon source='check' size={20} color={getContrastColor(swatchPalettes[index].primary)} />}
                 </View>
               </TouchableOpacity>
             ))}

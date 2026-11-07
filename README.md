@@ -2,6 +2,8 @@
 
 Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-native-paper/). Give it one color and an appearance setting, and it generates an MD3 palette and handles light/dark/system mode automatically.
 
+**[Live demo](https://rific.jaydeaton.com/demos/auto-paper)**
+
 ## Features
 
 - Color harmony palette from a single seed color (primary → secondary → tertiary), with 6 harmony modes available, defaulting to `split-complementary`
@@ -271,6 +273,7 @@ export default function App() {
 | `navigationBar` | `ExpoNavigationBarModule` | Injects `expo-navigation-bar` (`import * as ExpoNavigationBar from 'expo-navigation-bar'`) so the Android nav bar icon style auto-syncs with the theme while a `BottomNavigation` is mounted. Omit (and don't pass `onNavBarChange`) to skip nav bar syncing entirely. |
 | `onNavBarChange` | `(color: string, dark: boolean) => void` | Overrides the built-in nav bar sync: called on Android when the theme changes while a `BottomNavigation` is mounted, instead of the automatic `navigationBar`-driven icon-style sync |
 | `onReady` | `() => void` | Called once when the theme first resolves |
+| `paletteTone` | `PaletteTone` | Maps each palette color (primary, secondary and tertiary, after the harmony rotation) to the color the theme uses, given the resolved appearance: `(color, dark) => string`. Everything else (roles, containers, outline, surfaces) derives from the toned palette, the stored seed stays the player's raw pick, and `AutoPalettePicker` previews its swatches through the same tone. Signal colors (success, warning, danger, error) are never toned. Must be referentially stable (a module-level function). `getChalkboardColor` is one (marker in light mode, chalk in dark). Omit for the untoned palette. |
 | `reanimated` | `ReanimatedModule` | Injects `react-native-reanimated` (for example `import Reanimated from 'react-native-reanimated'`) so `<Dialog animatedStyle={...}>` can animate its card on the UI thread. Omit to keep `animatedStyle` as a no-op. |
 | `statusBar` | `boolean` | Renders React Native's `StatusBar`, styled from the theme (here and in `Appbar.Header`). Default `true`. Pass `false` when the app sets the status bar per screen instead (react-native-screens' `statusBarStyle`/`statusBarHidden` screen options, which need `UIViewControllerBasedStatusBarAppearance` on): there a React Native `StatusBar` logs an error. An app linked against the iOS 27 SDK can't set the status bar app-wide at all, which is the only way that component works on iOS, so per-screen options are the way to style it there. |
 | `statusBarProps` | `StatusBarProps` | Spread over the auto-derived `StatusBar` defaults (ignored when `statusBar` is `false`) |
@@ -648,7 +651,7 @@ const appearance = useSelector((state: RootState) => selectThemeAppearance(state
 ### Color utilities
 
 ```ts
-import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, getContrastRatio, getLuminance, isDarkColor, getRgb, getHex, getTonalColor, getTintTextColor, resolveSeedColor } from '@rific/auto-paper'
+import { getTriadicPalette, getThirdColor, getBlendedColor, getColorRoles, getContrastColor, getContrastRatio, getLuminance, isDarkColor, getRgb, getHex, getOklch, getOklchHex, getChalkboardColor, createChalkboardTone, getTonalColor, getTintTextColor, resolveSeedColor } from '@rific/auto-paper'
 import type { ColorHarmony, TriadicPalette } from '@rific/auto-paper'
 
 getTriadicPalette('#6750a4')                          // split-complementary (default)
@@ -668,6 +671,13 @@ getContrastColor('#6750a4')                  // → '#ffffff' (black/white pick 
 isDarkColor('#6750a4')                       // → true
 getRgb('coral')                              // → { r: 255, g: 127, b: 80 }
 getHex('rgb(255, 0, 0)')                     // → '#ff0000'
+getOklch('#6750a4')                          // → { l, c, h } (OKLCH: perceptual lightness 0-1, chroma, hue in degrees); null if unparseable
+getOklchHex({ l: 0.5, c: 0.15, h: 300 })     // → back to hex, losing only as much chroma as it must to stay in sRGB
+
+// Palette tones, for Provider's `paletteTone`: hue never moves, only lightness and chroma
+getChalkboardColor('#e53935', false)         // → a deeper marker red (light mode)
+getChalkboardColor('#e53935', true)          // → a pastel chalk red (dark mode)
+const softChalk = createChalkboardTone({ chalk: { minLuminance: 0 } }) // your own tone (marker and chalk options); define it at module level so it stays referentially stable
 
 resolveSeedColor('#6750a4')                  // → '#6750a4' (already a plain string)
 resolveSeedColor({ primary: '#6750a4', secondary: '#a4916c', tertiary: '#916ca4' }) // → '#6750a4' (a ThemeSettings.color explicit triad narrows to its own primary)

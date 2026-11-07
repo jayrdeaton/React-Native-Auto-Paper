@@ -1,10 +1,13 @@
 import { act, render } from '@testing-library/react'
 import { TouchableOpacity } from 'react-native'
-import { Icon, MD3LightTheme, SegmentedButtons, TouchableRipple, useTheme } from 'react-native-paper'
+import { Icon, MD3DarkTheme, MD3LightTheme, SegmentedButtons, TouchableRipple, useTheme } from 'react-native-paper'
 
 import { AutoPalettePicker } from '../components/AutoPalettePicker'
 import { defaultColors } from '../components/ColorPicker'
+import { PalettePicker } from '../components/PalettePicker'
+import { usePaletteTone } from '../ThemeProvider'
 import { defaultThemeSettings, ThemeSettingsContext } from '../ThemeSettingsContext'
+import { getChalkboardColor } from '../utils/getChalkboardColor'
 import { getContrastColor } from '../utils/getSwatchContrast'
 
 // See ColorPicker.test.tsx for why Dialog is stubbed rather than rendered for real.
@@ -13,6 +16,16 @@ jest.mock('../components/Dialog', () => {
   DialogMock.Content = ({ children }: { children?: React.ReactNode }) => children ?? null
   return { Dialog: DialogMock }
 })
+
+// The Provider's paletteTone, normally read from its context; absent unless a test sets one.
+jest.mock('../ThemeProvider', () => ({ ...jest.requireActual('../ThemeProvider'), usePaletteTone: jest.fn(() => undefined) }))
+// The real PalettePicker, wrapped to read the props AutoPalettePicker hands it.
+jest.mock('../components/PalettePicker', () => {
+  const actual = jest.requireActual('../components/PalettePicker')
+  return { ...actual, PalettePicker: jest.fn(actual.PalettePicker) }
+})
+const mockUsePaletteTone = usePaletteTone as jest.MockedFunction<typeof usePaletteTone>
+const mockPalettePicker = PalettePicker as jest.MockedFunction<typeof PalettePicker>
 
 const mockTouchableRipple = TouchableRipple as jest.MockedFunction<typeof TouchableRipple>
 const mockTouchableOpacity = TouchableOpacity as jest.MockedFunction<typeof TouchableOpacity>
@@ -87,5 +100,24 @@ describe('AutoPalettePicker', () => {
     onValueChange('square')
 
     expect(set).toHaveBeenCalledWith({ harmony: 'square' })
+  })
+
+  describe("the Provider's paletteTone", () => {
+    it('previews the swatches through it, in the current appearance', () => {
+      mockUsePaletteTone.mockReturnValue(getChalkboardColor)
+      mockUseTheme.mockReturnValue(MD3DarkTheme as any)
+      renderWithSettings('#f44336')
+
+      const { previewColor } = mockPalettePicker.mock.calls[0][0]
+      expect(previewColor).toBeDefined()
+      expect(previewColor!('#2196f3')).toBe(getChalkboardColor('#2196f3', true))
+    })
+
+    it('previews the raw palette when there is none', () => {
+      mockUsePaletteTone.mockReturnValue(undefined)
+      renderWithSettings('#f44336')
+
+      expect(mockPalettePicker.mock.calls[0][0].previewColor).toBeUndefined()
+    })
   })
 })
