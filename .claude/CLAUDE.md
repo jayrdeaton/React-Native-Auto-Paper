@@ -13,7 +13,7 @@ Part of the `@rific` package ecosystem. Published at https://www.npmjs.com/packa
 ```bash
 npm run build       # tsup, outputs CJS + ESM + types to dist/
 npm run check       # TypeScript type check (tsc --noEmit)
-npm test            # Jest (330 tests)
+npm test            # Jest (455 tests)
 npm run test:watch  # Jest in watch mode
 npm run build       # Full build via tsup
 ```
@@ -98,6 +98,8 @@ src/
 - Color utils: `getTriadicPalette`, `getThirdColor`, `getBlendedColor`, `getTonalColor`, `getTintTextColor`, `getContrastColor`, `getContrastRatio`, `getLuminance`, `isDarkColor`, `getRgb`, `getHex`, `getOklch`, `getOklchHex`, `getChalkboardColor`, `createChalkboardTone`
 
 ## Design Notes
+
+**2026-11-11 - `ColorPicker`'s `size` and accessibility labels (released in 0.15.0).** Found in SlingScan, whose Settings put the swatch on one row with an icon-only `AppearancePicker`: the trigger was fixed at 48pt against the segments' 40, so it stood taller. `size` sets the trigger's diameter (default 48, so nothing changes unasked), scaling the palette icon with it (20 at 48, 17 at 40), and below 44 a `hitSlop` keeps the touch area at 44pt. The trigger also had no accessibility label, so VoiceOver read an unnamed button: it now has `accessibilityRole='button'` and `accessibilityLabel` (default `'Color'`), and each swatch is read by its `SeedColor` label with `accessibilityState.selected` on the current one. `PalettePicker`'s trigger is still fixed at 48 and unlabeled.
 
 **2026-10-15 - `BlurView` no longer remounts its children when `blur` flips (released in 0.12.4).** It used to return `<expoBlur.BlurView>` when blurring and a plain `<View>` otherwise: different element types, so every flip unmounted and remounted the whole subtree. `Dialog` and `Menu` follow the live `settings.blur`, so this went user-visible with @tastic/hud 0.17.0, whose settings sheet (an auto-paper `Dialog`) has its own Blur row: tapping it remounted the sheet, resetting its scroll offset (in Snake held sideways the row jumped out of view), cutting off the ripple, dropping keyboard focus on web and resetting any local state in the app's own section.
 

@@ -8,6 +8,8 @@ import { getContrastColor, getSwatchRing } from '../utils/getSwatchContrast'
 import { Dialog } from './Dialog'
 
 const SIZE = 48
+// Apple's smallest comfortable touch target: a trigger drawn smaller still takes taps out to this
+const MIN_TOUCH = 44
 
 export type SeedColor = { label: string; value: string }
 
@@ -39,26 +41,34 @@ type Props = {
   onChange: (color: string) => void
   colors?: SeedColor[]
   blur?: boolean
+  // The trigger's diameter. 40 matches AppearancePicker's height (SegmentedButtons'), to share a row with it
+  size?: number
+  // What a screen reader calls the trigger. Each swatch is read by its own label
+  accessibilityLabel?: string
 }
 
-export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blurProp }: Props) => {
+export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blurProp, size: triggerSize = SIZE, accessibilityLabel = 'Color' }: Props) => {
   const blur = useBlur(blurProp)
   const { colors: themeColors } = useTheme()
   const [open, setOpen] = useState(false)
   const { onLayout, size } = useSwatchSize(SIZE)
+  const slop = Math.max(0, (MIN_TOUCH - triggerSize) / 2)
 
   return (
     <>
-      <TouchableRipple onPress={() => setOpen(true)} style={[styles.trigger, { backgroundColor: value }, getSwatchRing(value, false, themeColors.outlineVariant)]} borderless>
-        <Icon source='palette' size={20} color={getContrastColor(value)} />
+      <TouchableRipple accessibilityLabel={accessibilityLabel} accessibilityRole='button' hitSlop={slop || undefined} onPress={() => setOpen(true)} style={[styles.trigger, { backgroundColor: value, borderRadius: triggerSize / 2, height: triggerSize, width: triggerSize }, getSwatchRing(value, false, themeColors.outlineVariant)]} borderless>
+        <Icon source='palette' size={Math.round((triggerSize * 5) / 12)} color={getContrastColor(value)} />
       </TouchableRipple>
 
       <Dialog blur={blur} visible={open} onDismiss={() => setOpen(false)}>
         <Dialog.Content>
           <View style={styles.swatches} onLayout={onLayout}>
-            {colors.map(({ value: hex }) => (
+            {colors.map(({ label, value: hex }) => (
               <TouchableOpacity
                 key={hex}
+                accessibilityLabel={label}
+                accessibilityRole='button'
+                accessibilityState={{ selected: value === hex }}
                 onPress={() => {
                   onChange(hex)
                   setOpen(false)
@@ -78,5 +88,5 @@ export const ColorPicker = ({ value, onChange, colors = defaultColors, blur: blu
 const styles = StyleSheet.create({
   swatch: { alignItems: 'center', justifyContent: 'center' },
   swatches: { flexDirection: 'row', flexWrap: 'wrap', gap: SWATCH_GRID_GAP, paddingTop: 12 },
-  trigger: { alignItems: 'center', alignSelf: 'flex-start', borderRadius: SIZE / 2, height: SIZE, justifyContent: 'center', width: SIZE }
+  trigger: { alignItems: 'center', alignSelf: 'flex-start', justifyContent: 'center' }
 })

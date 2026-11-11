@@ -71,6 +71,43 @@ describe('ColorPicker', () => {
     expect(checkCalls[0][0].color).toBe(getContrastColor(selected))
   })
 
+  it('draws a 48pt trigger with a 20pt icon by default, with no extra touch area', () => {
+    render(<ColorPicker value='#ffffff' onChange={jest.fn()} />)
+
+    const { hitSlop, style } = mockTouchableRipple.mock.calls[0][0] as { hitSlop?: number; style: object[] }
+    expect(style).toEqual(expect.arrayContaining([expect.objectContaining({ borderRadius: 24, height: 48, width: 48 })]))
+    expect(mockIcon.mock.calls[0][0].size).toBe(20)
+    expect(hitSlop).toBeUndefined()
+  })
+
+  it('draws a smaller trigger at `size`, still taking taps out to 44pt', () => {
+    render(<ColorPicker value='#ffffff' onChange={jest.fn()} size={40} />)
+
+    const { hitSlop, style } = mockTouchableRipple.mock.calls[0][0] as { hitSlop?: number; style: object[] }
+    expect(style).toEqual(expect.arrayContaining([expect.objectContaining({ borderRadius: 20, height: 40, width: 40 })]))
+    expect(mockIcon.mock.calls[0][0].size).toBe(17)
+    expect(hitSlop).toBe(2)
+  })
+
+  it('names the trigger for screen readers, "Color" unless told otherwise', () => {
+    render(<ColorPicker value='#ffffff' onChange={jest.fn()} />)
+    render(<ColorPicker accessibilityLabel='Accent Color' value='#ffffff' onChange={jest.fn()} />)
+
+    const [first, second] = mockTouchableRipple.mock.calls.map(([props]) => props as { accessibilityLabel?: string; accessibilityRole?: string })
+    expect(first).toMatchObject({ accessibilityLabel: 'Color', accessibilityRole: 'button' })
+    expect(second.accessibilityLabel).toBe('Accent Color')
+  })
+
+  it('names each swatch by its label and marks the selected one', () => {
+    const selected = defaultColors[3]
+    render(<ColorPicker value={selected.value} onChange={jest.fn()} />)
+    openDialog()
+
+    const swatches = mockTouchableOpacity.mock.calls.map(([props]) => props as { accessibilityLabel?: string; accessibilityState?: { selected?: boolean } })
+    expect(swatches.map(({ accessibilityLabel }) => accessibilityLabel)).toEqual(defaultColors.map(({ label }) => label))
+    expect(swatches.filter(({ accessibilityState }) => accessibilityState?.selected).map(({ accessibilityLabel }) => accessibilityLabel)).toEqual([selected.label])
+  })
+
   it('never leaves a swatch edgeless: every ring has a positive borderWidth', () => {
     render(<ColorPicker value={defaultColors[0].value} onChange={jest.fn()} />)
     openDialog()

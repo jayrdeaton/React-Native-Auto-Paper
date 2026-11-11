@@ -560,6 +560,28 @@ import { IconButton } from '@rific/auto-paper'
 
 `IconButtonProps` is exported from `@rific/auto-paper` and extends `react-native-paper`'s `IconButtonProps` with the `variant` field. Use `PaperIconButtonProps` if you need the base paper type.
 
+### `ColorPicker`
+
+A round swatch button that opens a dialog of seed colors to pick from.
+
+```tsx
+import { ColorPicker, useThemeSettings } from '@rific/auto-paper'
+
+function SettingsScreen() {
+  const { settings: { color }, set } = useThemeSettings()
+  return <ColorPicker value={color} onChange={(c) => set({ color: c })} size={40} />
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `value` | `string` | Currently selected seed color |
+| `onChange` | `(color: string) => void` | Called with the seed color when a swatch is tapped |
+| `colors` | `SeedColor[]` | Swatches to offer, each `{ label, value }`. Defaults to `defaultColors` (20). Map over `defaultColors` to swap in an app's own default color, so it can be picked again |
+| `size` | `number` | The trigger's diameter. Defaults to `48`. `40` matches `AppearancePicker`'s height, to share a row with it. Below 44 the trigger still takes taps out to 44pt |
+| `accessibilityLabel` | `string` | What a screen reader calls the trigger. Defaults to `'Color'`. Each swatch is read by its own `label`, and the selected one as selected |
+| `blur` | `boolean` | Overrides the ambient blur setting for this component's dialog |
+
 ### `PalettePicker`
 
 Like `ColorPicker`, but each swatch (and the trigger itself) renders the seed's full triadic palette as a 3-wedge pie instead of a flat color, so you see the whole result before picking. Pass `onHarmonyChange` to fold a compact, icon-only `HarmonyPicker` row into the same dialog, above the swatch grid - every swatch's own pie reshapes live as harmony changes, so there's one place to tune both instead of two separate controls. Omit it and this renders exactly as a plain color-only picker always has.
