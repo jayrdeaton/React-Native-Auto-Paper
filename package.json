@@ -73,7 +73,7 @@
     "@infinitetoken/tsconfig": "^0.6.0",
     "@react-native-masked-view/masked-view": "^0.3.2",
     "@reduxjs/toolkit": "^2.0.0",
-    "@rific/core": "^0.3.0",
+    "@rific/core": "^0.5.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.0.0",
     "@types/jest": "^30.0.0",
