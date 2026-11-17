@@ -719,3 +719,7 @@ resolveSeedColor({ primary: '#6750a4', secondary: '#a4916c', tertiary: '#916ca4'
 ## License
 
 MIT
+
+---
+
+Made by [Infinite Token](https://www.infinitetoken.com), the team behind [Lumber](https://lumber.infinitetoken.com): end-to-end encrypted logging.
