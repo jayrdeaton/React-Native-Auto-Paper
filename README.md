@@ -23,17 +23,18 @@ Adaptive theming for [`react-native-paper`](https://callstack.github.io/react-na
 npm install @rific/auto-paper
 ```
 
-Required peer dependency:
+Required peer dependencies:
 
 ```bash
-npm install react-native-paper
+npm install @rific/core react-native-paper react-native-safe-area-context
 ```
 
 Optional peer dependencies:
 
 ```bash
-npm install expo-blur             # frosted-glass BlurView
-npm install expo-navigation-bar   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
+npm install expo-blur                             # frosted-glass BlurView
+npm install expo-navigation-bar                   # (>= 56.0.0, SDK 54+) auto-syncs Android nav bar icon style to the theme when BottomNavigation is mounted
+npm install @react-native-masked-view/masked-view # (>= 0.3.0) FadingScrollView's edge fade on iOS and Android
 ```
 
 These integrations are opt-in: pass them to `Provider` (`expoBlur`, `maskedView`, `navigationBar`, and `reanimated` - see the prop table below), and the relevant wrappers pick them up automatically. Omit them and you still get working fallbacks: `BlurView` renders its solid (non-blur) look, `FadingScrollView` scrolls without its fade on iOS and Android, `BottomNavigation` simply skips nav-bar syncing, and `Dialog` treats `animatedStyle` as a no-op unless a reanimated module is injected.
@@ -310,7 +311,17 @@ const bridgeProps = useThemeBridgeProps({ initialValue: settings, onChange, onRe
 
 Returns `{ settings: ThemeSettings, set: (patch: Partial<ThemeSettings>) => void }`. Use this hook from any component inside `Provider` to read or update the current theme settings.
 
-`useReanimatedModule()` is also available inside the provider tree when you need to read the injected reanimated module directly; it returns `undefined` unless `Provider` was given a `reanimated` prop.
+The rest of what `Provider` was given can be read the same way from inside its tree, for a component of your own that should behave like this package's:
+
+| Hook | Returns |
+|---|---|
+| `useReanimatedModule()` | The injected `reanimated` module, or `undefined` without one |
+| `useBlurModule()` | The injected `expoBlur` module, or `undefined` (what `BlurView` checks before it blurs) |
+| `useMaskedViewModule()` | The injected `maskedView` component, or `undefined` (what `FadingScrollView` checks before it fades on iOS and Android) |
+| `usePaletteTone()` | The `paletteTone` function, or `undefined` for the untoned palette. `AutoPalettePicker` previews its swatches through it, so a swatch picker of your own can show colors the way the theme will draw them |
+| `useNavBarContext()` | `{ navigationBar, onNavBarChange }`, as passed to `Provider` (what `BottomNavigation` syncs the Android nav bar with) |
+
+`ThemeSettingsContext` is the React context `useThemeSettings()` reads, built with `@rific/core`'s `createSettingsContext`. Its value is a `ThemeSettingsContextType` (`{ settings, set }`), and `defaultThemeSettings` holds the defaults it starts from.
 
 ```tsx
 import { useThemeSettings } from '@rific/auto-paper'
